@@ -1,125 +1,82 @@
-/* ================================
-   Global Reset
-================================ */
+/* Global */
 * {
   box-sizing: border-box;
 }
 
 html, body {
   margin: 0;
-  padding: 0;
   width: 100%;
   height: 100%;
+  background: #0b0f14;
   overflow: hidden;
-  background: #0a0d11;
-  font-family: 'Inter', sans-serif;
-  color: #eaf4ff;
+  font-family: Inter, system-ui, sans-serif;
 }
 
-/* ================================
-   Canvas
-================================ */
-#scene {
-  position: absolute;
+/* WebGL canvas */
+#gl {
+  position: fixed;
+  inset: 0;
   width: 100%;
   height: 100%;
-  display: block;
-  z-index: 1;
 }
 
-/* ================================
-   Overlay UI
-================================ */
+/* UI overlay */
 #overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 10;
-  pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at center, rgba(0,0,0,0.1), rgba(0,0,0,0.75));
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(0,0,0,.2), rgba(0,0,0,.75));
 }
 
-/* ================================
-   Text Container
-================================ */
+/* Copy block */
 #copy {
   text-align: center;
-  max-width: 800px;
+  color: #e8f1ff;
+  max-width: 900px;
   padding: 40px;
 }
 
-/* ================================
-   Suspense Lines
-================================ */
+/* Suspense lines */
 .line {
   font-size: 22px;
-  letter-spacing: 1.2px;
-  margin: 12px 0;
+  letter-spacing: 1.4px;
+  margin: 14px 0;
   opacity: 0;
   transform: translateY(20px);
-  animation: fadeUp 2s forwards;
-  color: #cfe8ff;
-  text-shadow: 0 0 12px rgba(120,180,255,0.35);
+  animation: fadeUp 16s infinite;
 }
 
-#line1 { animation-delay: 0s; }
-#line2 { animation-delay: 2.5s; }
-#line3 { animation-delay: 5s; }
-#line4 { animation-delay: 7.5s; }
+.line:nth-child(1) { animation-delay: 0s; }
+.line:nth-child(2) { animation-delay: 4s; }
+.line:nth-child(3) { animation-delay: 8s; }
+.line:nth-child(4) { animation-delay: 12s; }
 
 @keyframes fadeUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  0%,15% { opacity: 0; transform: translateY(20px); }
+  25%,55% { opacity: 1; transform: translateY(0); }
+  70%,100% { opacity: 0; transform: translateY(-20px); }
 }
 
-/* ================================
-   Brand
-================================ */
+/* Brand */
 #brand {
   margin-top: 60px;
-  font-size: 46px;
-  letter-spacing: 6px;
+  font-size: 48px;
+  letter-spacing: 8px;
   font-weight: 700;
   color: #ffffff;
   text-shadow:
-    0 0 10px rgba(120,200,255,0.8),
-    0 0 40px rgba(120,200,255,0.5);
-  animation: breathe 4s infinite ease-in-out;
+    0 0 12px rgba(120,180,255,.8),
+    0 0 40px rgba(120,180,255,.5);
 }
 
-/* ================================
-   Breathing Glow
-================================ */
-@keyframes breathe {
-  0% {
-    text-shadow:
-      0 0 8px rgba(120,200,255,0.5),
-      0 0 30px rgba(120,200,255,0.2);
-  }
-  50% {
-    text-shadow:
-      0 0 20px rgba(120,200,255,1),
-      0 0 60px rgba(120,200,255,0.8);
-  }
-  100% {
-    text-shadow:
-      0 0 8px rgba(120,200,255,0.5),
-      0 0 30px rgba(120,200,255,0.2);
-  }
-}
-
-/* ================================
-   Mobile Scaling
-================================ */
+/* Mobile */
 @media (max-width: 768px) {
   .line {
     font-size: 16px;
   }
-
   #brand {
     font-size: 32px;
   }
