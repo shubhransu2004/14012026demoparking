@@ -1,30 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <title>FeeParking</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css"/>
+<meta charset="utf-8">
+<title>FeeParking</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  background:#0b0f14;
+  overflow:hidden;
+  font-family:Inter,system-ui;
+}
+canvas{
+  position:absolute;
+  width:100%;
+  height:100%;
+  top:0;left:0;
+}
+#ui{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+}
+#copy{
+  text-align:center;
+  color:#e9f2ff;
+  text-shadow:0 0 20px rgba(120,180,255,.4);
+}
+.line{
+  font-size:22px;
+  letter-spacing:1px;
+  opacity:0;
+  animation:fade 12s infinite;
+}
+.line:nth-child(1){animation-delay:0s}
+.line:nth-child(2){animation-delay:3s}
+.line:nth-child(3){animation-delay:6s}
+.line:nth-child(4){animation-delay:9s}
+@keyframes fade{
+  0%,20%{opacity:0}
+  30%,60%{opacity:1}
+  80%,100%{opacity:0}
+}
+#brand{
+  margin-top:40px;
+  font-size:48px;
+  letter-spacing:6px;
+  font-weight:700;
+  color:#fff;
+  text-shadow:0 0 30px rgba(150,200,255,.8);
+}
+</style>
 </head>
 <body>
-  <!-- WebGL canvas -->
-  <canvas id="gl"></canvas>
 
-  <!-- Minimal launch copy -->
-  <div id="overlay">
-    <div id="copy">
-      <div class="line" data-i="0">The city is about to move differently.</div>
-      <div class="line" data-i="1">What used to be chaos is becoming flow.</div>
-      <div class="line" data-i="2">Every arrival will know where to go.</div>
-      <div class="line" data-i="3">A new layer is being built beneath the streets.</div>
-      <div id="brand">FeeParking</div>
-    </div>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div id="copy">
+    <div class="line">The city is about to move differently.</div>
+    <div class="line">What used to be chaos is becoming flow.</div>
+    <div class="line">Every arrival will know where to go.</div>
+    <div class="line">A new layer is being built beneath the streets.</div>
+    <div id="brand">FeeParking</div>
   </div>
+</div>
 
-  <!-- Engine -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-  <script src="scene.js"></script>
-  <script src="main.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+<script>
+const canvas=document.getElementById("c");
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(devicePixelRatio);
+
+const scene=new THREE.Scene();
+scene.fog=new THREE.Fog(0x0b0f14,10,80);
+
+const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,200);
+camera.position.set(0,4,18);
+
+// lighting
+scene.add(new THREE.AmbientLight(0x557799,.4));
+const key=new THREE.DirectionalLight(0x99ccff,1);
+key.position.set(5,10,5);
+scene.add(key);
+const gold=new THREE.PointLight(0xffcc88,1,40);
+gold.position.set(-5,5,5);
+scene.add(gold);
+
+// floor
+const floorGeo=new THREE.PlaneGeometry(200,200,1,1);
+const floorMat=new THREE.MeshStandardMaterial({color:0x101318,roughness:.8,metalness:.2});
+const floor=new THREE.Mesh(floorGeo,floorMat);
+floor.rotation.x=-Math.PI/2;
+scene.add(floor);
+
+// tunnel walls
+const wallMat=new THREE.MeshStandardMaterial({color:0x0f141a,roughness:.7,metalness:.3});
+for(let i=-1;i<=1;i+=2){
+  const wall=new THREE.Mesh(new THREE.BoxGeometry(2,6,60),wallMat);
+  wall.position.set(i*5,3,-20);
+  scene.add(wall);
+}
+
+// lane lights
+const lanes=[];
+for(let i=-6;i<=6;i++){
+  const g=new THREE.BoxGeometry(.2,.05,80);
+  const m=new THREE.MeshStandardMaterial({color:0x66ccff,emissive:0x224466});
+  const l=new THREE.Mesh(g,m);
+  l.position.set(i*1.2,.03,0);
+  scene.add(l);
+  lanes.push(l);
+}
+
+// hex floor
+const hexGeo=new THREE.CylinderGeometry(.8,.8,.1,6);
+for(let x=-8;x<=8;x+=2.5){
+  for(let z=-8;z<=8;z+=2.5){
+    const m=new THREE.MeshStandardMaterial({color:0x111820,emissive:0x223344});
+    const h=new THREE.Mesh(hexGeo,m);
+    h.position.set(x,.05,z);
+    h.rotation.y=Math.PI/6;
+    scene.add(h);
+  }
+}
+
+// particles
+const pGeo=new THREE.BufferGeometry();
+const p=[];
+for(let i=0;i<2000;i++){
+  p.push((Math.random()-.5)*100,Math.random()*10+1,(Math.random()-.5)*100);
+}
+pGeo.setAttribute("position",new THREE.Float32BufferAttribute(p,3));
+const pMat=new THREE.PointsMaterial({color:0x88bbff,size:.1,transparent:true,opacity:.4});
+const dust=new THREE.Points(pGeo,pMat);
+scene.add(dust);
+
+// input
+let mx=0,my=0;
+onmousemove=e=>{
+  mx=(e.clientX/innerWidth-.5)*6;
+  my=(e.clientY/innerHeight-.5)*3;
+};
+ontouchmove=e=>{
+  const t=e.touches[0];
+  mx=(t.clientX/innerWidth-.5)*6;
+  my=(t.clientY/innerHeight-.5)*3;
+};
+
+let t0=0;
+function loop(t){
+  requestAnimationFrame(loop);
+  t*=0.001;
+
+  // camera move from tunnel to open
+  camera.position.z=18-Math.min(t*2,10);
+  camera.position.x+= (mx-camera.position.x)*.05;
+  camera.position.y+= (4+my-camera.position.y)*.05;
+  camera.lookAt(0,0,0);
+
+  lanes.forEach((l,i)=>{
+    l.material.emissiveIntensity=.5+Math.sin(t*3+i*.3)*.8;
+  });
+
+  dust.rotation.y+=.0005;
+
+  renderer.render(scene,camera);
+}
+loop();
+
+onresize=()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+};
+</script>
 </body>
 </html>
