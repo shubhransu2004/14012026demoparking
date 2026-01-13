@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FeeParking — Coming Soon</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body {
+  background: radial-gradient(circle at center, #020b14, #000);
+  color: #00f6ff;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.container {
+  text-align: center;
+  z-index: 2;
+}
+
+h1 {
+  font-size: 48px;
+  letter-spacing: 4px;
+  margin-bottom: 10px;
+}
+
+.tagline {
+  font-size: 16px;
+  color: #9ff;
+  opacity: 0.8;
+  margin-bottom: 30px;
+}
+
+.status {
+  font-size: 18px;
+  margin-top: 20px;
+  color: #0ff;
+  animation: blink 2s infinite;
+}
+
+/* ==== ORBITAL LOADER ==== */
+
+.loader {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  margin: 0 auto 30px auto;
+}
+
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid rgba(0,255,255,0.4);
+  animation: spin 8s linear infinite;
+}
+
+.ring:nth-child(1) {
+  width: 260px;
+  height: 260px;
+}
+
+.ring:nth-child(2) {
+  width: 200px;
+  height: 200px;
+  top: 30px;
+  left: 30px;
+  animation-duration: 5s;
+  animation-direction: reverse;
+}
+
+.ring:nth-child(3) {
+  width: 140px;
+  height: 140px;
+  top: 60px;
+  left: 60px;
+  animation-duration: 3s;
+}
+
+.core {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background: #00f6ff;
+  top: 110px;
+  left: 110px;
+  border-radius: 6px;
+  box-shadow: 0 0 30px #00f6ff;
+  animation: pulse 1.5s infinite;
+}
+
+/* ==== HEX GRID ==== */
+
+.hex-grid {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  opacity: 0.07;
+}
+
+.hex {
+  width: 60px;
+  height: 34px;
+  background: #00f6ff;
+  position: absolute;
+  animation: fade 3s infinite;
+}
+
+.hex:before,
+.hex:after {
+  content: "";
+  position: absolute;
+  width: 0;
+  border-left: 30px solid transparent;
+  border-right: 30px solid transparent;
+}
+
+.hex:before {
+  bottom: 100%;
+  border-bottom: 17px solid #00f6ff;
+}
+
+.hex:after {
+  top: 100%;
+  border-top: 17px solid #00f6ff;
+}
+
+/* ==== ANIMATIONS ==== */
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.3); }
+  100% { transform: scale(1); }
+}
+
+@keyframes blink {
+  50% { opacity: 0.3; }
+}
+
+@keyframes fade {
+  0%,100% { opacity: 0.1; }
+  50% { opacity: 1; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="hex-grid" id="hexGrid"></div>
+
+<div class="container">
+  <div class="loader">
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="core"></div>
+  </div>
+
+  <h1>FEEPARKING</h1>
+  <div class="tagline">Smart Parking • AI • Automation</div>
+
+  <p>We are building something powerful.</p>
+  <p>This will be worth the wait.</p>
+
+  <div class="status">WORK IN PROGRESS</div>
+</div>
+
+<script>
+const grid = document.getElementById("hexGrid");
+
+for(let y=0;y<10;y++){
+  for(let x=0;x<10;x++){
+    const h = document.createElement("div");
+    h.className = "hex";
+    h.style.left = (x*65 + (y%2)*32) + "px";
+    h.style.top = (y*56) + "px";
+    h.style.animationDelay = (Math.random()*3)+"s";
+    grid.appendChild(h);
+  }
+}
+</script>
+
+</body>
+</html>
