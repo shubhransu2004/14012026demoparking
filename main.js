@@ -1,46 +1,48 @@
-const { scene, camera, renderer, lanes, hexes, dust } = window.FP;
+const { scene, camera, renderer, lanes, lights, dust } = window.FP;
 
 let mx = 0, my = 0;
 addEventListener("mousemove", e => {
-  mx = (e.clientX / innerWidth - .5) * 8;
-  my = (e.clientY / innerHeight - .5) * 4;
+  mx = (e.clientX / innerWidth - .5) * 6;
+  my = (e.clientY / innerHeight - .5) * 3;
 });
 addEventListener("touchmove", e => {
   const t = e.touches[0];
-  mx = (t.clientX / innerWidth - .5) * 8;
-  my = (t.clientY / innerHeight - .5) * 4;
+  mx = (t.clientX / innerWidth - .5) * 6;
+  my = (t.clientY / innerHeight - .5) * 3;
 });
 
 const clock = new THREE.Clock();
 
-function loop() {
-  requestAnimationFrame(loop);
+function animate() {
+  requestAnimationFrame(animate);
   const t = clock.getElapsedTime();
 
-  /* Tunnel to open */
-  camera.position.z = 18 - Math.min(t * 2, 10);
+  /* Camera tunnel → hall */
+  camera.position.z = 18 - Math.min(t * 2, 12);
+  camera.position.x += (mx - camera.position.x) * 0.05;
+  camera.position.y += (3.5 + my - camera.position.y) * 0.05;
+  camera.lookAt(0, 2, 0);
 
-  /* Parallax */
-  camera.position.x += (mx - camera.position.x) * .05;
-  camera.position.y += (4 + my - camera.position.y) * .05;
-  camera.lookAt(0, 0, 0);
+  /* Light breathing */
+  lights.forEach((l, i) => {
+    l.material.emissiveIntensity = 0.5 + Math.sin(t * 3 + i * 0.3) * 0.6;
+  });
 
-  /* Lane breathing */
+  /* Lane pulse */
   lanes.forEach((l, i) => {
-    l.material.emissiveIntensity = .4 + Math.sin(t * 3 + i * .3) * 1.1;
+    l.material.emissiveIntensity = 0.8 + Math.sin(t * 4 + i) * 0.8;
   });
 
-  /* Hex pulse */
-  hexes.forEach(h => {
-    h.material.emissiveIntensity = .4 + Math.sin(t + h.position.x + h.position.z) * .5;
-    h.position.y = .06 + Math.sin(t + h.position.x) * .03;
-  });
+  /* Dust drift */
+  dust.rotation.y += 0.0005;
+  dust.position.y = 2 + Math.sin(t * 0.4) * 1;
 
-  dust.rotation.y += .0005;
+  /* World breathing */
+  scene.rotation.y = Math.sin(t * 0.1) * 0.02;
 
   renderer.render(scene, camera);
 }
-loop();
+animate();
 
 addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight;
