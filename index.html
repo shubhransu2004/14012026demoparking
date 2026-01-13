@@ -18,7 +18,7 @@ html,body{
   color:#fff;
 }
 
-/* Layered animated background */
+/* Animated cinematic background */
 .bg{
   position:fixed;
   inset:-20%;
@@ -30,14 +30,13 @@ html,body{
   animation:bgShift 25s ease-in-out infinite;
   filter:blur(40px);
 }
-
 @keyframes bgShift{
   0%{background-position:0% 50%}
   50%{background-position:100% 50%}
   100%{background-position:0% 50%}
 }
 
-/* Animated texture noise */
+/* Film grain texture */
 .noise{
   position:fixed;
   inset:0;
@@ -46,7 +45,6 @@ html,body{
   mix-blend-mode:overlay;
   animation:noiseMove 10s steps(10) infinite;
 }
-
 @keyframes noiseMove{
   from{transform:translate(0,0)}
   to{transform:translate(-100px,100px)}
@@ -59,7 +57,7 @@ html,body{
   background:radial-gradient(circle at center, transparent 40%, rgba(0,0,0,.85));
 }
 
-/* Content */
+/* Center system */
 .center{
   position:absolute;
   inset:0;
@@ -69,49 +67,82 @@ html,body{
   text-align:center;
 }
 
+/* Glass container */
 .block{
-  max-width:900px;
-  padding:40px;
+  padding:60px 70px;
+  border-radius:18px;
+  background:rgba(10,15,25,.35);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  box-shadow:
+    0 0 80px rgba(100,160,255,.15),
+    inset 0 0 60px rgba(120,170,255,.08);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:20px;
 }
 
-/* Big Coming Soon */
+/* COMING SOON shimmer */
 .soon{
   font-size:120px;
-  letter-spacing:12px;
   font-weight:700;
-  color:#ffffff;
-  text-shadow:
-    0 0 30px rgba(120,170,255,.6),
-    0 0 120px rgba(120,170,255,.4);
-  animation: breathe 6s ease-in-out infinite;
+  letter-spacing:12px;
+  position:relative;
+  background:linear-gradient(
+    120deg,
+    #ffffff 20%,
+    #9fd1ff 40%,
+    #ffffff 60%
+  );
+  background-size:200% auto;
+  color:transparent;
+  -webkit-background-clip:text;
+  background-clip:text;
+  animation: shimmer 6s linear infinite, breathe 6s ease-in-out infinite;
+}
+
+@keyframes shimmer{
+  from{background-position:200% center}
+  to{background-position:0% center}
 }
 @keyframes breathe{
-  0%{transform:scale(1);filter:brightness(1)}
-  50%{transform:scale(1.03);filter:brightness(1.2)}
-  100%{transform:scale(1);filter:brightness(1)}
+  0%{transform:scale(1)}
+  50%{transform:scale(1.03)}
+  100%{transform:scale(1)}
 }
 
 /* Brand */
 .brand{
-  margin-top:40px;
+  margin-top:10px;
   font-size:36px;
   letter-spacing:8px;
   color:#cfdcff;
   text-shadow:0 0 20px rgba(120,170,255,.5);
 }
 
-/* Tagline */
+/* Tag */
 .tag{
-  margin-top:20px;
   font-size:18px;
-  letter-spacing:2px;
+  line-height:1.8;
   color:#aebcff;
+}
+
+/* Hype */
+.hype{
+  margin-top:20px;
+  font-size:22px;
+  font-weight:600;
+  letter-spacing:1px;
+  color:#ffffff;
+  text-shadow:0 0 25px rgba(120,170,255,.6);
 }
 
 /* Mobile */
 @media(max-width:700px){
   .soon{font-size:60px;letter-spacing:6px}
   .brand{font-size:24px}
+  .block{padding:40px}
 }
 </style>
 </head>
@@ -126,12 +157,13 @@ html,body{
   <div class="block">
     <div class="soon">COMING&nbsp;SOON</div>
     <div class="brand">FEEPARKING</div>
-    <div class="tag">Urban parking is about to change<br>
-	A new way to move through the city is being built.<br>
+    <div class="tag">
+      Urban parking is about to change.<br>
+      A new way to move through the city is being built.<br>
       Where every arrival is guided.<br>
-      Where every space knows your name.<br><br><br><br>
-      <h2><b>Something powerful is coming.	</b>
-	</div>
+      Where every space knows your name.
+    </div>
+    <div class="hype">Something powerful is coming.</div>
   </div>
 </div>
 
