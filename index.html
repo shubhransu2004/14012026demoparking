@@ -1,38 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8"/>
   <title>FeeParking</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Premium readable font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
-
-  <!-- Core style -->
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
 </head>
-
 <body>
-  <!-- 3D Canvas -->
-  <canvas id="scene"></canvas>
+  <!-- WebGL canvas -->
+  <canvas id="gl"></canvas>
 
-  <!-- Overlay UI -->
+  <!-- Minimal launch copy -->
   <div id="overlay">
     <div id="copy">
-      <div class="line" id="line1">The city is about to move differently.</div>
-      <div class="line" id="line2">What used to be chaos is becoming flow.</div>
-      <div class="line" id="line3">Every arrival will know where to go.</div>
-      <div class="line" id="line4">A new layer is being built beneath the streets.</div>
-
+      <div class="line" data-i="0">The city is about to move differently.</div>
+      <div class="line" data-i="1">What used to be chaos is becoming flow.</div>
+      <div class="line" data-i="2">Every arrival will know where to go.</div>
+      <div class="line" data-i="3">A new layer is being built beneath the streets.</div>
       <div id="brand">FeeParking</div>
     </div>
   </div>
 
-  <!-- Three.js engine -->
+  <!-- Engine -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-
-  <!-- Scene + app -->
   <script src="scene.js"></script>
-  <script src="app.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>
