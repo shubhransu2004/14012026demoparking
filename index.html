@@ -1,201 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>FeeParking</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <title>FeeParking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<style>
-html,body{
-margin:0;
-width:100%;
-height:100%;
-background:#06090f;
-overflow:hidden;
-font-family:'Inter',sans-serif;
-}
+  <!-- Premium readable font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
 
-#world{
-position:absolute;
-width:100%;
-height:100%;
-perspective:1400px;
-}
-
-#stage{
-position:absolute;
-width:100%;
-height:100%;
-transform-style:preserve-3d;
-transition:0.1s;
-}
-
-.grid{
-position:absolute;
-width:200%;
-height:200%;
-background:
-linear-gradient(#0ff1 1px,transparent 1px),
-linear-gradient(90deg,#0ff1 1px,transparent 1px);
-background-size:70px 70px;
-transform:rotateX(70deg) translateY(300px);
-opacity:0.25;
-}
-
-.particle{
-position:absolute;
-width:4px;
-height:4px;
-background:#0ff;
-border-radius:50%;
-opacity:0.4;
-animation:float 10s infinite linear;
-}
-
-@keyframes float{
-0%{transform:translateY(0) translateX(0)}
-100%{transform:translateY(-1200px) translateX(200px)}
-}
-
-#core{
-position:absolute;
-top:50%;
-left:50%;
-width:150px;
-height:150px;
-margin:-75px;
-border-radius:30px;
-background:radial-gradient(circle,#0ff,#022);
-box-shadow:0 0 80px #0ff;
-animation:breathe 5s ease-in-out infinite;
-transform-style:preserve-3d;
-}
-
-@keyframes breathe{
-0%{box-shadow:0 0 60px #0ff}
-50%{box-shadow:0 0 120px #0ff}
-100%{box-shadow:0 0 60px #0ff}
-}
-
-.ring{
-position:absolute;
-top:50%;
-left:50%;
-width:450px;
-height:450px;
-margin:-225px;
-border-radius:50%;
-border:1px solid #0ff3;
-animation:spin 30s linear infinite;
-}
-
-.ring:nth-child(2){
-width:650px;
-height:650px;
-margin:-325px;
-animation-duration:50s;
-}
-
-@keyframes spin{
-from{transform:rotateZ(0deg)}
-to{transform:rotateZ(360deg)}
-}
-
-#ui{
-position:absolute;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%) translateZ(200px);
-text-align:center;
-color:#dfffff;
-text-shadow:0 0 20px #0ff;
-}
-
-#title{
-font-size:64px;
-letter-spacing:6px;
-font-weight:700;
-}
-
-#sub{
-margin-top:10px;
-font-size:14px;
-letter-spacing:3px;
-opacity:0.8;
-}
-
-#status{
-margin-top:40px;
-font-size:12px;
-letter-spacing:4px;
-opacity:0.5;
-}
-
-#pulse{
-position:absolute;
-top:50%;
-left:50%;
-width:350px;
-height:350px;
-margin:-175px;
-border-radius:50%;
-border:1px solid #0ff2;
-animation:pulse 4s infinite;
-}
-
-@keyframes pulse{
-0%{transform:scale(1);opacity:0.4}
-50%{transform:scale(1.4);opacity:0.1}
-100%{transform:scale(1);opacity:0.4}
-}
-</style>
+  <!-- Core style -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
+  <!-- 3D Canvas -->
+  <canvas id="scene"></canvas>
 
-<div id="world">
-<div id="stage">
+  <!-- Overlay UI -->
+  <div id="overlay">
+    <div id="copy">
+      <div class="line" id="line1">The city is about to move differently.</div>
+      <div class="line" id="line2">What used to be chaos is becoming flow.</div>
+      <div class="line" id="line3">Every arrival will know where to go.</div>
+      <div class="line" id="line4">A new layer is being built beneath the streets.</div>
 
-<div class="grid"></div>
+      <div id="brand">FeeParking</div>
+    </div>
+  </div>
 
-<div class="ring"></div>
-<div class="ring"></div>
+  <!-- Three.js engine -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
-<div id="pulse"></div>
-<div id="core"></div>
-
-<div id="ui">
-<div id="title">FEEPARKING</div>
-<div id="sub">Smart • Automated • Seamless</div>
-<div id="status">SYSTEM WARMING</div>
-</div>
-
-</div>
-</div>
-
-<script>
-const stage = document.getElementById("stage");
-const core = document.getElementById("core");
-
-// parallax
-document.addEventListener("mousemove", e=>{
- let x=(e.clientX/window.innerWidth-0.5)*30;
- let y=(e.clientY/window.innerHeight-0.5)*30;
- stage.style.transform=`rotateY(${x}deg) rotateX(${-y}deg)`;
- core.style.transform=`translateZ(${80+y}px) rotateX(${y}deg) rotateY(${x}deg)`;
-});
-
-// particles
-for(let i=0;i<80;i++){
- let p=document.createElement("div");
- p.className="particle";
- p.style.left=Math.random()*100+"%";
- p.style.top=Math.random()*100+"%";
- p.style.animationDuration=(5+Math.random()*15)+"s";
- document.body.appendChild(p);
-}
-</script>
-
+  <!-- Scene + app -->
+  <script src="scene.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
