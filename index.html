@@ -5,147 +5,126 @@
 <title>FeeParking</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;800&display=swap" rel="stylesheet">
 
 <style>
-*{box-sizing:border-box;}
+:root{
+  --blue:#6fb6ff;
+  --bg:#02040a;
+}
+*{box-sizing:border-box}
+
 html,body{
-  margin:0;height:100%;background:#04070f;
+  margin:0;
+  width:100%;
+  height:100%;
+  background:var(--bg);
   font-family:Inter,system-ui;
-  overflow:hidden;color:#fff;
+  overflow:hidden;
+  color:#fff;
 }
 
-/* Aurora background */
+/* ===== Moving gradient sky ===== */
 .bg{
-  position:fixed;inset:-40%;
+  position:fixed;
+  inset:-30%;
   background:
-    radial-gradient(circle at 20% 30%, rgba(100,160,255,.25), transparent 60%),
-    radial-gradient(circle at 80% 70%, rgba(255,200,140,.18), transparent 65%),
-    linear-gradient(120deg,#03060c,#0a1228,#03060c);
-  background-size:300% 300%;
-  animation:bgMove 40s ease-in-out infinite;
+    radial-gradient(circle at 20% 30%, rgba(90,150,255,.25), transparent 50%),
+    radial-gradient(circle at 70% 60%, rgba(255,200,120,.15), transparent 55%),
+    linear-gradient(120deg,#04060a,#0a1120,#04060a);
+  background-size:200% 200%;
+  animation:sky 30s ease infinite;
   filter:blur(60px);
 }
-@keyframes bgMove{
+@keyframes sky{
   0%{background-position:0% 50%}
   50%{background-position:100% 50%}
   100%{background-position:0% 50%}
 }
 
-/* Light beams */
+/* ===== Light beams ===== */
 .beams{
-  position:fixed;inset:0;
+  position:fixed;
+  inset:0;
   background:
-    linear-gradient(120deg, transparent 40%, rgba(120,170,255,.12), transparent 60%),
-    linear-gradient(260deg, transparent 30%, rgba(255,220,170,.08), transparent 55%);
+    linear-gradient(120deg, transparent 30%, rgba(120,170,255,.15), transparent 60%),
+    linear-gradient(-120deg, transparent 40%, rgba(255,200,150,.1), transparent 70%);
+  animation:beams 15s ease-in-out infinite alternate;
   mix-blend-mode:screen;
-  animation:beams 30s linear infinite;
 }
 @keyframes beams{
-  from{background-position:0% 0%}
-  to{background-position:200% 200%}
+  from{transform:translateX(-10%)}
+  to{transform:translateX(10%)}
 }
 
-/* Floating dust */
-.particles{
-  position:fixed;inset:0;
-  background:
-    radial-gradient(circle, rgba(255,255,255,.12) 1px, transparent 2px);
-  background-size:80px 80px;
-  opacity:.25;
-  animation:dust 90s linear infinite;
-}
-@keyframes dust{
-  from{transform:translateY(0)}
-  to{transform:translateY(-300px)}
-}
-
-/* Film grain */
+/* ===== Noise texture ===== */
 .noise{
-  position:fixed;inset:0;
+  position:fixed;
+  inset:0;
   background:url("https://grainy-gradients.vercel.app/noise.svg");
-  opacity:.05;mix-blend-mode:overlay;
+  opacity:.06;
 }
 
-/* Vignette */
-.vignette{
-  position:fixed;inset:0;
-  background:radial-gradient(circle at center, transparent 40%, rgba(0,0,0,.9));
+/* ===== Center container ===== */
+.wrap{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  perspective:1200px;
 }
 
-/* Centering */
-.center{
-  position:absolute;inset:0;
-  display:flex;align-items:center;justify-content:center;
-  padding:20px;
-}
-
-/* Glass card */
+/* ===== Glass card ===== */
 .card{
-  width:100%;
-  max-width:960px;
-  background:rgba(10,15,30,.45);
-  backdrop-filter:blur(24px);
-  -webkit-backdrop-filter:blur(24px);
-  border-radius:26px;
-  padding:60px 40px;
-  box-shadow:
-    0 0 120px rgba(120,170,255,.25),
-    inset 0 0 60px rgba(140,190,255,.1);
-  text-align:center;
-  transition:transform .15s ease;
+  width:min(90vw,780px);
+  padding:clamp(30px,6vw,70px);
+  border-radius:28px;
+  background:rgba(10,20,40,.55);
+  backdrop-filter:blur(30px);
+  border:1px solid rgba(120,170,255,.15);
+  box-shadow:0 40px 120px rgba(0,0,0,.7);
+  transform-style:preserve-3d;
+  transition:box-shadow .4s ease;
 }
 
-/* Title (mobile safe) */
+/* ===== Shimmer headline ===== */
 .title{
-  font-weight:700;
-  font-size:clamp(42px, 11vw, 110px);
-  letter-spacing:clamp(4px, 1.8vw, 12px);
-  line-height:1.05;
-  max-width:100%;
-  text-align:center;
-  word-break:break-word;
-  overflow-wrap:break-word;
-  background:linear-gradient(120deg,#ffffff 30%,#a5d3ff 45%,#ffffff 60%);
-  background-size:200% auto;
-  color:transparent;
+  font-size:clamp(48px,9vw,120px);
+  font-weight:800;
+  letter-spacing:.15em;
+  line-height:1;
+  background:linear-gradient(90deg,#fff 30%,var(--blue) 50%,#fff 70%);
+  background-size:200% 100%;
   -webkit-background-clip:text;
-  background-clip:text;
-  animation:shimmer 6s linear infinite;
+  color:transparent;
+  animation:shine 6s linear infinite;
 }
-@keyframes shimmer{
-  from{background-position:200% center}
-  to{background-position:0% center}
+@keyframes shine{
+  from{background-position:200%}
+  to{background-position:-200%}
 }
 
-/* Brand */
 .brand{
-  margin-top:20px;
-  font-size:clamp(18px,4vw,32px);
-  letter-spacing:8px;
-  color:#cfdcff;
-  text-shadow:0 0 20px rgba(120,170,255,.6);
+  margin-top:24px;
+  font-size:clamp(18px,3vw,34px);
+  letter-spacing:.6em;
+  color:#cfe1ff;
 }
 
-/* Text */
 .text{
-  margin-top:30px;
-  font-size:clamp(14px,3vw,18px);
-  line-height:1.7;
-  color:#b6c7ff;
+  margin-top:32px;
+  font-size:clamp(14px,2vw,18px);
+  line-height:1.8;
+  color:#b9c8ff;
 }
 
-/* Hype */
 .hype{
-  margin-top:30px;
-  font-size:clamp(18px,4vw,22px);
+  margin-top:36px;
+  font-size:clamp(16px,2.5vw,22px);
   font-weight:600;
-  text-shadow:0 0 30px rgba(120,170,255,.7);
-}
-
-/* Mobile padding */
-@media(max-width:600px){
-  .card{padding:40px 24px;}
+  color:#fff;
+  text-shadow:0 0 30px rgba(120,170,255,.6);
 }
 </style>
 </head>
@@ -154,14 +133,11 @@ html,body{
 
 <div class="bg"></div>
 <div class="beams"></div>
-<div class="particles"></div>
 <div class="noise"></div>
-<div class="vignette"></div>
 
-<div class="center">
+<div class="wrap">
   <div class="card" id="card">
     <div class="title">COMING&nbsp;SOON</div>
-
     <div class="brand">FEEPARKING</div>
 
     <div class="text">
@@ -171,28 +147,50 @@ html,body{
       Where every space knows your name.
     </div>
 
-    <div class="hype">
-      Something powerful is coming.
-    </div>
+    <div class="hype">Something powerful is coming.</div>
   </div>
 </div>
 
 <script>
 const card = document.getElementById("card");
 
-document.addEventListener("mousemove", e=>{
-  const x = (e.clientX / window.innerWidth - 0.5)*10;
-  const y = (e.clientY / window.innerHeight - 0.5)*10;
-  card.style.transform = `rotateX(${-y}deg) rotateY(${x}deg)`;
+let mx=0,my=0,tx=0,ty=0;
+
+/* Mouse */
+document.addEventListener("mousemove",e=>{
+  mx=(e.clientX/window.innerWidth-.5)*14;
+  my=(e.clientY/window.innerHeight-.5)*14;
 });
 
-if(window.DeviceOrientationEvent){
-  window.addEventListener("deviceorientation", e=>{
-    const x = e.gamma/3;
-    const y = e.beta/6;
-    card.style.transform = `rotateX(${y}deg) rotateY(${x}deg)`;
-  });
+/* Mobile motion */
+function handleTilt(e){
+  if(!e.beta) return;
+  mx=(e.gamma/45)*14;
+  my=(e.beta/45)*14;
 }
+
+/* Permission */
+function enableMotion(){
+  if(typeof DeviceOrientationEvent!=="undefined" &&
+     typeof DeviceOrientationEvent.requestPermission==="function"){
+    DeviceOrientationEvent.requestPermission().then(r=>{
+      if(r==="granted") window.addEventListener("deviceorientation",handleTilt);
+    });
+  }else{
+    window.addEventListener("deviceorientation",handleTilt);
+  }
+}
+document.body.addEventListener("click",enableMotion,{once:true});
+
+/* Smooth physics */
+function loop(){
+  tx+=(mx-tx)*0.08;
+  ty+=(my-ty)*0.08;
+  card.style.transform=
+    `rotateX(${-ty}deg) rotateY(${tx}deg) translateZ(40px)`;
+  requestAnimationFrame(loop);
+}
+loop();
 </script>
 
 </body>
