@@ -9,148 +9,129 @@
 
 <style>
 *{box-sizing:border-box;}
-
 html,body{
-  margin:0;
-  width:100%;
-  height:100%;
-  background:#05070c;
-  font-family:Inter,system-ui;
-  overflow:hidden;
-  color:#fff;
+  margin:0;height:100%;background:#04070f;
+  font-family:Inter,system-ui;overflow:hidden;color:#fff;
 }
 
-/* moving aurora light */
+/* Aurora background */
 .bg{
-  position:fixed;
-  inset:-30%;
+  position:fixed;inset:-40%;
   background:
-    radial-gradient(circle at 20% 30%, rgba(80,150,255,.25), transparent 60%),
-    radial-gradient(circle at 80% 70%, rgba(255,190,130,.15), transparent 65%),
-    linear-gradient(120deg,#03060c,#0b1328,#03060c);
-  background-size:250% 250%;
-  animation:bgShift 30s ease-in-out infinite;
-  filter:blur(50px);
+    radial-gradient(circle at 20% 30%, rgba(100,160,255,.25), transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(255,200,140,.18), transparent 65%),
+    linear-gradient(120deg,#03060c,#0a1228,#03060c);
+  background-size:300% 300%;
+  animation:bgMove 40s ease-in-out infinite;
+  filter:blur(60px);
 }
-@keyframes bgShift{
+@keyframes bgMove{
   0%{background-position:0% 50%}
   50%{background-position:100% 50%}
   100%{background-position:0% 50%}
 }
 
-/* floating light dust */
-.particles{
-  position:fixed;
-  inset:0;
+/* light beams */
+.beams{
+  position:fixed;inset:0;
   background:
-    radial-gradient(circle, rgba(255,255,255,.12) 1px, transparent 2px);
-  background-size:60px 60px;
-  opacity:.25;
-  animation: drift 60s linear infinite;
+    linear-gradient(120deg, transparent 40%, rgba(120,170,255,.12), transparent 60%),
+    linear-gradient(260deg, transparent 30%, rgba(255,220,170,.08), transparent 55%);
+  mix-blend-mode:screen;
+  animation:beams 30s linear infinite;
 }
-@keyframes drift{
-  from{transform:translateY(0)}
-  to{transform:translateY(-200px)}
+@keyframes beams{
+  from{background-position:0% 0%}
+  to{background-position:200% 200%}
 }
 
-/* film grain */
+/* floating dust */
+.particles{
+  position:fixed;inset:0;
+  background:
+    radial-gradient(circle, rgba(255,255,255,.12) 1px, transparent 2px);
+  background-size:80px 80px;
+  opacity:.25;
+  animation:dust 90s linear infinite;
+}
+@keyframes dust{
+  from{transform:translateY(0)}
+  to{transform:translateY(-300px)}
+}
+
+/* noise */
 .noise{
-  position:fixed;
-  inset:0;
+  position:fixed;inset:0;
   background:url("https://grainy-gradients.vercel.app/noise.svg");
-  opacity:.05;
-  mix-blend-mode:overlay;
+  opacity:.05;mix-blend-mode:overlay;
 }
 
 /* vignette */
 .vignette{
-  position:fixed;
-  inset:0;
-  background:radial-gradient(circle at center, transparent 40%, rgba(0,0,0,.85));
+  position:fixed;inset:0;
+  background:radial-gradient(circle at center, transparent 40%, rgba(0,0,0,.9));
 }
 
-/* center container */
+/* Center */
 .center{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:24px;
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;
 }
 
-/* glass card */
-.block{
-  width:100%;
-  max-width:900px;
-  background:rgba(10,15,30,.40);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
-  border-radius:20px;
+/* Glass card */
+.card{
+  width:100%;max-width:960px;
+  background:rgba(10,15,30,.45);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border-radius:26px;
   padding:60px 40px;
   box-shadow:
-    0 0 80px rgba(100,160,255,.18),
-    inset 0 0 60px rgba(120,170,255,.10);
+    0 0 120px rgba(120,170,255,.25),
+    inset 0 0 60px rgba(140,190,255,.1);
   text-align:center;
+  transition:transform .15s ease;
 }
 
-/* COMING SOON */
-.soon{
-  font-size:clamp(48px, 10vw, 120px);
+/* Fluid title */
+.title{
   font-weight:700;
-  letter-spacing:clamp(4px, 1vw, 12px);
-  background:linear-gradient(120deg,#ffffff 30%,#9fd1ff 45%,#ffffff 60%);
+  font-size:clamp(42px, 12vw, 110px);
+  letter-spacing:clamp(4px, 2vw, 12px);
+  white-space:nowrap;
+  background:linear-gradient(120deg,#fff 30%,#a5d3ff 45%,#fff 60%);
   background-size:200% auto;
   color:transparent;
   -webkit-background-clip:text;
   background-clip:text;
-  animation: shimmer 6s linear infinite, breathe 6s ease-in-out infinite;
-  white-space:nowrap;
+  animation:shimmer 6s linear infinite;
 }
 @keyframes shimmer{
   from{background-position:200% center}
   to{background-position:0% center}
 }
-@keyframes breathe{
-  0%{transform:scale(1)}
-  50%{transform:scale(1.04)}
-  100%{transform:scale(1)}
-}
 
-/* brand */
 .brand{
-  margin-top:24px;
-  font-size:clamp(20px, 4vw, 36px);
+  margin-top:20px;
+  font-size:clamp(18px,4vw,32px);
   letter-spacing:8px;
   color:#cfdcff;
   text-shadow:0 0 20px rgba(120,170,255,.6);
 }
 
-/* copy */
-.tag{
+.text{
   margin-top:30px;
-  font-size:clamp(14px, 3vw, 18px);
-  line-height:1.8;
+  font-size:clamp(14px,3vw,18px);
+  line-height:1.7;
   color:#b6c7ff;
 }
 
-/* hype */
 .hype{
-  margin-top:32px;
-  font-size:clamp(18px, 4vw, 22px);
+  margin-top:30px;
+  font-size:clamp(18px,4vw,22px);
   font-weight:600;
-  color:#fff;
   text-shadow:0 0 30px rgba(120,170,255,.7);
-}
-
-/* phones */
-@media(max-width:600px){
-  .block{
-    padding:40px 24px;
-  }
-  .tag{
-    line-height:1.6;
-  }
 }
 </style>
 </head>
@@ -158,122 +139,16 @@ html,body{
 <body>
 
 <div class="bg"></div>
+<div class="beams"></div>
 <div class="particles"></div>
 <div class="noise"></div>
 <div class="vignette"></div>
 
 <div class="center">
-  <div class="block">
-    <div class="soon">COMING&nbsp;SOON</div>
+  <div class="card" id="card">
+    <div class="title">COMING&nbsp;SOON</div>
     <div class="brand">FEEPARKING</div>
-
-    <div class="tag">
-      Urban parking is about to change.<br>
-      A new way to move through the city is being built.<br>
-      Where every arrival is guided.<br>
-      Where every space knows your name.
-    </div>
-
-    <div class="hype">
-      Something powerful is coming.
-    </div>
-  </div>
-</div>
-
-</body>
-</html>}
-
-/* Glass container */
-.block{
-  padding:60px 70px;
-  border-radius:18px;
-  background:rgba(10,15,25,.35);
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
-  box-shadow:
-    0 0 80px rgba(100,160,255,.15),
-    inset 0 0 60px rgba(120,170,255,.08);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:20px;
-}
-
-/* COMING SOON shimmer */
-.soon{
-  font-size:120px;
-  font-weight:700;
-  letter-spacing:12px;
-  position:relative;
-  background:linear-gradient(
-    120deg,
-    #ffffff 20%,
-    #9fd1ff 40%,
-    #ffffff 60%
-  );
-  background-size:200% auto;
-  color:transparent;
-  -webkit-background-clip:text;
-  background-clip:text;
-  animation: shimmer 6s linear infinite, breathe 6s ease-in-out infinite;
-}
-
-@keyframes shimmer{
-  from{background-position:200% center}
-  to{background-position:0% center}
-}
-@keyframes breathe{
-  0%{transform:scale(1)}
-  50%{transform:scale(1.03)}
-  100%{transform:scale(1)}
-}
-
-/* Brand */
-.brand{
-  margin-top:10px;
-  font-size:36px;
-  letter-spacing:8px;
-  color:#cfdcff;
-  text-shadow:0 0 20px rgba(120,170,255,.5);
-}
-
-/* Tag */
-.tag{
-  font-size:18px;
-  line-height:1.8;
-  color:#aebcff;
-}
-
-/* Hype */
-.hype{
-  margin-top:20px;
-  font-size:22px;
-  font-weight:600;
-  letter-spacing:1px;
-  color:#ffffff;
-  text-shadow:0 0 25px rgba(120,170,255,.6);
-}
-
-/* Mobile */
-@media(max-width:700px){
-  .soon{font-size:60px;letter-spacing:6px}
-  .brand{font-size:24px}
-  .block{padding:40px}
-}
-</style>
-</head>
-
-<body>
-
-<div class="bg"></div>
-<div class="noise"></div>
-<div class="vignette"></div>
-
-<div class="center">
-  <div class="block">
-    <div class="soon">COMING&nbsp;SOON</div>
-    <div class="brand">FEEPARKING</div>
-    <div class="tag">
+    <div class="text">
       Urban parking is about to change.<br>
       A new way to move through the city is being built.<br>
       Where every arrival is guided.<br>
@@ -282,6 +157,24 @@ html,body{
     <div class="hype">Something powerful is coming.</div>
   </div>
 </div>
+
+<script>
+const card = document.getElementById("card");
+
+document.addEventListener("mousemove", e=>{
+  const x = (e.clientX / window.innerWidth - 0.5)*10;
+  const y = (e.clientY / window.innerHeight - 0.5)*10;
+  card.style.transform = `rotateX(${-y}deg) rotateY(${x}deg)`;
+});
+
+if(window.DeviceOrientationEvent){
+  window.addEventListener("deviceorientation", e=>{
+    const x = e.gamma/3;
+    const y = e.beta/6;
+    card.style.transform = `rotateX(${y}deg) rotateY(${x}deg)`;
+  });
+}
+</script>
 
 </body>
 </html>
