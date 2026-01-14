@@ -3,61 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <title>FeeParking</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;800&display=swap" rel="stylesheet">
 
 <style>
-:root{
-  --blue:#6fb6ff;
-  --bg:#02040a;
-}
 *{box-sizing:border-box}
-
 html,body{
   margin:0;
   width:100%;
   height:100%;
-  background:var(--bg);
-  font-family:Inter,system-ui;
+  background:#02040a;
+  font-family:Inter,sans-serif;
   overflow:hidden;
   color:#fff;
 }
 
-/* ===== Moving gradient sky ===== */
+/* ===== animated sky ===== */
 .bg{
   position:fixed;
   inset:-30%;
   background:
-    radial-gradient(circle at 20% 30%, rgba(90,150,255,.25), transparent 50%),
-    radial-gradient(circle at 70% 60%, rgba(255,200,120,.15), transparent 55%),
-    linear-gradient(120deg,#04060a,#0a1120,#04060a);
+    radial-gradient(circle at 20% 30%, rgba(100,160,255,.25), transparent 50%),
+    radial-gradient(circle at 70% 60%, rgba(255,200,150,.15), transparent 55%),
+    linear-gradient(120deg,#04060a,#0b1122,#04060a);
   background-size:200% 200%;
-  animation:sky 30s ease infinite;
+  animation:bgmove 30s ease infinite;
   filter:blur(60px);
 }
-@keyframes sky{
+@keyframes bgmove{
   0%{background-position:0% 50%}
   50%{background-position:100% 50%}
   100%{background-position:0% 50%}
 }
 
-/* ===== Light beams ===== */
+/* light beams */
 .beams{
   position:fixed;
   inset:0;
   background:
-    linear-gradient(120deg, transparent 30%, rgba(120,170,255,.15), transparent 60%),
-    linear-gradient(-120deg, transparent 40%, rgba(255,200,150,.1), transparent 70%);
-  animation:beams 15s ease-in-out infinite alternate;
+    linear-gradient(120deg, transparent 40%, rgba(120,170,255,.15), transparent 60%),
+    linear-gradient(-120deg, transparent 30%, rgba(255,200,150,.12), transparent 70%);
+  animation:beam 15s ease-in-out infinite alternate;
   mix-blend-mode:screen;
 }
-@keyframes beams{
+@keyframes beam{
   from{transform:translateX(-10%)}
   to{transform:translateX(10%)}
 }
 
-/* ===== Noise texture ===== */
+/* noise */
 .noise{
   position:fixed;
   inset:0;
@@ -65,36 +60,44 @@ html,body{
   opacity:.06;
 }
 
-/* ===== Center container ===== */
+/* layout */
 .wrap{
   position:absolute;
   inset:0;
   display:flex;
   align-items:center;
   justify-content:center;
-  perspective:1200px;
+  padding:
+    env(safe-area-inset-top)
+    env(safe-area-inset-right)
+    env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
 }
 
-/* ===== Glass card ===== */
+/* glass card */
 .card{
-  width:min(90vw,780px);
-  padding:clamp(30px,6vw,70px);
+  width:min(90vw,760px);
+  padding:clamp(28px,6vw,64px);
   border-radius:28px;
-  background:rgba(10,20,40,.55);
+  background:rgba(12,22,40,.6);
   backdrop-filter:blur(30px);
   border:1px solid rgba(120,170,255,.15);
   box-shadow:0 40px 120px rgba(0,0,0,.7);
+  text-align:center;
   transform-style:preserve-3d;
-  transition:box-shadow .4s ease;
 }
 
-/* ===== Shimmer headline ===== */
+/* ===== Responsive auto-fitting title ===== */
 .title{
-  font-size:clamp(48px,9vw,120px);
+  width:100%;
+  max-width:100%;
   font-weight:800;
-  letter-spacing:.15em;
   line-height:1;
-  background:linear-gradient(90deg,#fff 30%,var(--blue) 50%,#fff 70%);
+  letter-spacing:.18em;
+  white-space:nowrap;
+  display:block;
+  font-size:clamp(42px, 10vw, 110px);
+  background:linear-gradient(90deg,#fff 30%,#7fc0ff 50%,#fff 70%);
   background-size:200% 100%;
   -webkit-background-clip:text;
   color:transparent;
@@ -105,13 +108,15 @@ html,body{
   to{background-position:-200%}
 }
 
+/* brand */
 .brand{
   margin-top:24px;
-  font-size:clamp(18px,3vw,34px);
+  font-size:clamp(16px,3vw,32px);
   letter-spacing:.6em;
   color:#cfe1ff;
 }
 
+/* text */
 .text{
   margin-top:32px;
   font-size:clamp(14px,2vw,18px);
@@ -119,6 +124,7 @@ html,body{
   color:#b9c8ff;
 }
 
+/* hype */
 .hype{
   margin-top:36px;
   font-size:clamp(16px,2.5vw,22px);
@@ -152,42 +158,36 @@ html,body{
 </div>
 
 <script>
-const card = document.getElementById("card");
-
+const card=document.getElementById("card");
 let mx=0,my=0,tx=0,ty=0;
 
-/* Mouse */
 document.addEventListener("mousemove",e=>{
-  mx=(e.clientX/window.innerWidth-.5)*14;
-  my=(e.clientY/window.innerHeight-.5)*14;
+  mx=(e.clientX/window.innerWidth-.5)*12;
+  my=(e.clientY/window.innerHeight-.5)*12;
 });
 
-/* Mobile motion */
-function handleTilt(e){
+function tilt(e){
   if(!e.beta) return;
-  mx=(e.gamma/45)*14;
-  my=(e.beta/45)*14;
+  mx=(e.gamma/40)*12;
+  my=(e.beta/40)*12;
 }
 
-/* Permission */
-function enableMotion(){
+function enableTilt(){
   if(typeof DeviceOrientationEvent!=="undefined" &&
      typeof DeviceOrientationEvent.requestPermission==="function"){
     DeviceOrientationEvent.requestPermission().then(r=>{
-      if(r==="granted") window.addEventListener("deviceorientation",handleTilt);
+      if(r==="granted") window.addEventListener("deviceorientation",tilt);
     });
   }else{
-    window.addEventListener("deviceorientation",handleTilt);
+    window.addEventListener("deviceorientation",tilt);
   }
 }
-document.body.addEventListener("click",enableMotion,{once:true});
+document.body.addEventListener("click",enableTilt,{once:true});
 
-/* Smooth physics */
 function loop(){
-  tx+=(mx-tx)*0.08;
-  ty+=(my-ty)*0.08;
-  card.style.transform=
-    `rotateX(${-ty}deg) rotateY(${tx}deg) translateZ(40px)`;
+  tx+=(mx-tx)*.08;
+  ty+=(my-ty)*.08;
+  card.style.transform=`rotateX(${-ty}deg) rotateY(${tx}deg) translateZ(40px)`;
   requestAnimationFrame(loop);
 }
 loop();
