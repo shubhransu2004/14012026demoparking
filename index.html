@@ -11,7 +11,8 @@
 *{box-sizing:border-box;}
 html,body{
   margin:0;height:100%;background:#04070f;
-  font-family:Inter,system-ui;overflow:hidden;color:#fff;
+  font-family:Inter,system-ui;
+  overflow:hidden;color:#fff;
 }
 
 /* Aurora background */
@@ -31,7 +32,7 @@ html,body{
   100%{background-position:0% 50%}
 }
 
-/* light beams */
+/* Light beams */
 .beams{
   position:fixed;inset:0;
   background:
@@ -45,7 +46,7 @@ html,body{
   to{background-position:200% 200%}
 }
 
-/* floating dust */
+/* Floating dust */
 .particles{
   position:fixed;inset:0;
   background:
@@ -59,20 +60,20 @@ html,body{
   to{transform:translateY(-300px)}
 }
 
-/* noise */
+/* Film grain */
 .noise{
   position:fixed;inset:0;
   background:url("https://grainy-gradients.vercel.app/noise.svg");
   opacity:.05;mix-blend-mode:overlay;
 }
 
-/* vignette */
+/* Vignette */
 .vignette{
   position:fixed;inset:0;
   background:radial-gradient(circle at center, transparent 40%, rgba(0,0,0,.9));
 }
 
-/* Center */
+/* Centering */
 .center{
   position:absolute;inset:0;
   display:flex;align-items:center;justify-content:center;
@@ -81,7 +82,8 @@ html,body{
 
 /* Glass card */
 .card{
-  width:100%;max-width:960px;
+  width:100%;
+  max-width:960px;
   background:rgba(10,15,30,.45);
   backdrop-filter:blur(24px);
   -webkit-backdrop-filter:blur(24px);
@@ -94,13 +96,17 @@ html,body{
   transition:transform .15s ease;
 }
 
-/* Fluid title */
+/* Title (mobile safe) */
 .title{
   font-weight:700;
-  font-size:clamp(42px, 12vw, 110px);
-  letter-spacing:clamp(4px, 2vw, 12px);
-  white-space:nowrap;
-  background:linear-gradient(120deg,#fff 30%,#a5d3ff 45%,#fff 60%);
+  font-size:clamp(42px, 11vw, 110px);
+  letter-spacing:clamp(4px, 1.8vw, 12px);
+  line-height:1.05;
+  max-width:100%;
+  text-align:center;
+  word-break:break-word;
+  overflow-wrap:break-word;
+  background:linear-gradient(120deg,#ffffff 30%,#a5d3ff 45%,#ffffff 60%);
   background-size:200% auto;
   color:transparent;
   -webkit-background-clip:text;
@@ -112,6 +118,7 @@ html,body{
   to{background-position:0% center}
 }
 
+/* Brand */
 .brand{
   margin-top:20px;
   font-size:clamp(18px,4vw,32px);
@@ -120,6 +127,7 @@ html,body{
   text-shadow:0 0 20px rgba(120,170,255,.6);
 }
 
+/* Text */
 .text{
   margin-top:30px;
   font-size:clamp(14px,3vw,18px);
@@ -127,11 +135,17 @@ html,body{
   color:#b6c7ff;
 }
 
+/* Hype */
 .hype{
   margin-top:30px;
   font-size:clamp(18px,4vw,22px);
   font-weight:600;
   text-shadow:0 0 30px rgba(120,170,255,.7);
+}
+
+/* Mobile padding */
+@media(max-width:600px){
+  .card{padding:40px 24px;}
 }
 </style>
 </head>
@@ -147,14 +161,19 @@ html,body{
 <div class="center">
   <div class="card" id="card">
     <div class="title">COMING&nbsp;SOON</div>
+
     <div class="brand">FEEPARKING</div>
+
     <div class="text">
       Urban parking is about to change.<br>
       A new way to move through the city is being built.<br>
       Where every arrival is guided.<br>
       Where every space knows your name.
     </div>
-    <div class="hype">Something powerful is coming.</div>
+
+    <div class="hype">
+      Something powerful is coming.
+    </div>
   </div>
 </div>
 
