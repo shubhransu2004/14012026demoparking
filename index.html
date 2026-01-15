@@ -1,1 +1,168 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <title>FeeParking</title> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet"> <style> html,body{ margin:0; width:100%; height:100%; background:#03050a; font-family:Inter,system-ui; overflow:hidden; color:#fff; } /* ======= BACKGROUND ======= */ .bg{ position:fixed; inset:-20%; background: radial-gradient(circle at 20% 30%, rgba(80,140,255,.25), transparent 60%), radial-gradient(circle at 80% 70%, rgba(255,200,120,.12), transparent 60%), linear-gradient(120deg,#05080f,#0b1630,#05080f); background-size:200% 200%; animation:bgMove 30s ease-in-out infinite; filter:blur(50px); } @keyframes bgMove{ 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} } /* Floating particles */ .particles{ position:fixed; inset:0; background: radial-gradient(#7aa2ff 1px, transparent 1px), radial-gradient(#ffffff33 1px, transparent 1px); background-size:80px 80px,140px 140px; animation:float 60s linear infinite; opacity:.15; } @keyframes float{ from{background-position:0 0,0 0} to{background-position:1000px 600px,-800px 400px} } /* Vignette */ .vignette{ position:fixed; inset:0; background:radial-gradient(circle at center, transparent 40%, rgba(0,0,0,.9)); } /* ======= CENTER CARD ======= */ .wrap{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; perspective:1000px; } .card{ background:rgba(15,25,50,.55); backdrop-filter:blur(30px); border-radius:32px; padding:clamp(30px,6vw,70px); box-shadow:0 0 120px rgba(100,160,255,.35); border:1px solid rgba(140,180,255,.25); text-align:center; transform-style:preserve-3d; transition:transform .2s ease-out; } /* ======= TITLE ======= */ .title{ display:flex; justify-content:center; flex-wrap:wrap; gap:.3em; font-size:clamp(48px,10vw,130px); font-weight:700; letter-spacing:.2em; line-height:1; color:white; text-shadow:0 0 40px rgba(120,180,255,.7); position:relative; overflow:hidden; } /* shimmer */ .title::after{ content:""; position:absolute; inset:-50%; background:linear-gradient(120deg, transparent 40%, rgba(255,255,255,.35), transparent 60%); animation:shimmer 6s infinite; } @keyframes shimmer{ 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} } .title span{ white-space:nowrap; } /* ======= BRAND ======= */ .brand{ margin-top:30px; font-size:clamp(18px,4vw,32px); letter-spacing:.4em; color:#cdd9ff; text-shadow:0 0 20px rgba(120,160,255,.5); } /* ======= TEXT ======= */ .text{ margin-top:30px; font-size:clamp(14px,3vw,18px); line-height:1.7; color:#b8c8ff; } .bold{ margin-top:40px; font-size:clamp(18px,4vw,24px); color:white; text-shadow:0 0 20px rgba(120,180,255,.5); } /* ======= MOBILE ======= */ @media(max-width:600px){ .title{letter-spacing:.1em} } /* ======= BREATHING ======= */ .card{ animation:breath 8s ease-in-out infinite; } @keyframes breath{ 0%,100%{transform:translateZ(0) scale(1)} 50%{transform:translateZ(30px) scale(1.02)} } </style> </head> <body> <div class="bg"></div> <div class="particles"></div> <div class="vignette"></div> <div class="wrap"> <div class="card" id="card"> <div class="title"> <span>COMING</span><span>SOON</span> </div> <div class="brand">FEEPARKING</div> <div class="text"> Urban parking is about to change.<br> A new way to move through the city is being built.<br> Where every arrival is guided.<br> Where every space knows your name. </div> <div class="bold">Something powerful is coming...... At your Service</div> <div class="bold">by CarbonOut</div> </div> </div> <script> const card = document.getElementById("card"); /* Mouse tilt */ document.addEventListener("mousemove", e=>{ const x = (window.innerWidth/2 - e.clientX)/25; const y = (window.innerHeight/2 - e.clientY)/25; card.style.transform = rotateY(${x}deg) rotateX(${y}deg); }); /* Phone tilt */ if(window.DeviceOrientationEvent){ window.addEventListener("deviceorientation", e=>{ const x = e.gamma/3; const y = e.beta/6; card.style.transform = rotateY(${x}deg) rotateX(${y}deg); }); } </script> </body> </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FeeParking – Live Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: #0b0f14;
+  color: #e6e6e6;
+}
+
+header {
+  background: #111827;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 20px;
+  color: #38bdf8;
+}
+
+.status {
+  font-size: 14px;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  padding: 20px;
+}
+
+.card {
+  background: #111827;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.card h2 {
+  margin-top: 0;
+  font-size: 16px;
+  color: #7dd3fc;
+}
+
+.slots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.slot {
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.free { background: #064e3b; color: #34d399; }
+.occupied { background: #7f1d1d; color: #f87171; }
+
+.logs {
+  font-family: monospace;
+  font-size: 13px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 16px;
+}
+
+button.danger {
+  background: #dc2626;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>FEEPARKING – LIVE DASHBOARD</h1>
+  <div class="status" id="apiStatus">Connecting...</div>
+</header>
+
+<div class="container">
+
+  <!-- LEFT -->
+  <div class="card">
+    <h2>Parking Slots</h2>
+    <div class="slots" id="slots"></div>
+  </div>
+
+  <!-- RIGHT -->
+  <div>
+    <div class="card">
+      <h2>Latest Plates</h2>
+      <div class="logs" id="logs"></div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <h2>Gate Control</h2>
+      <button class="danger" onclick="openGate()">OPEN EXIT GATE</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = "https://api.feeparking.in";
+
+async function checkHealth() {
+  try {
+    const r = await fetch(API + "/health");
+    document.getElementById("apiStatus").innerText = "API ONLINE";
+  } catch {
+    document.getElementById("apiStatus").innerText = "API OFFLINE";
+  }
+}
+
+async function loadSlots() {
+  const r = await fetch(API + "/slots");
+  const data = await r.json();
+
+  document.getElementById("slots").innerHTML = data.map(s =>
+    `<div class="slot ${s.occupied ? "occupied" : "free"}">
+      Slot ${s.slot}<br>${s.occupied ? "OCCUPIED" : "FREE"}
+     </div>`
+  ).join("");
+}
+
+async function loadLogs() {
+  const r = await fetch(API + "/logs");
+  const data = await r.json();
+
+  document.getElementById("logs").innerHTML = data
+    .map(l => `${l.plate} @ ${l.timestamp}`)
+    .join("<br>");
+}
+
+async function openGate() {
+  await fetch(API + "/open_gate", { method: "POST" });
+  alert("Gate opened");
+}
+
+setInterval(() => {
+  loadSlots();
+  loadLogs();
+  checkHealth();
+}, 2000);
+</script>
+
+</body>
+</html>
