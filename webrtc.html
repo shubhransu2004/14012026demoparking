@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FeeParking Live | Secure Uplink</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<!-- Font Awesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --bg: #000000;
+  --overlay-bg: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.8) 100%);
+  --accent: #64ffda; /* Cyan Neon */
+  --danger: #ef4444;
+  --text: #ffffff;
+  --glass: rgba(20, 30, 45, 0.6);
+  --border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Container for Video & UI */
+.viewer-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #05070c;
+}
+
+video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Keeps aspect ratio */
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+/* --- HUD OVERLAY (UI Layer) --- */
+.hud-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  background: var(--overlay-bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px;
+  box-sizing: border-box;
+  transition: opacity 0.3s ease;
+  pointer-events: none; /* Let clicks pass through to video/body unless on buttons */
+}
+
+.hud-layer.idle {
+  opacity: 0;
+}
+
+/* Header Info */
+.hud-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: auto;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fbbf24; /* Warning yellow initially */
+  box-shadow: 0 0 10px #fbbf24;
+  transition: all 0.3s;
+}
+
+.status-dot.active {
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  animation: pulse 2s infinite;
+}
+
+.status-dot.error {
+  background: var(--danger);
+  box-shadow: 0 0 10px var(--danger);
+}
+
+@keyframes pulse {
+  0% { opacity: 1; box-shadow: 0 0 0 0 rgba(100, 255, 218, 0.7); }
+  70% { opacity: 1; box-shadow: 0 0 0 10px rgba(100, 255, 218, 0); }
+  100% { opacity: 1; box-shadow: 0 0 0 0 rgba(100, 255, 218, 0); }
+}
+
+.meta-info {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(0,0,0,0.5);
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+
+/* Footer Controls */
+.hud-footer {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  pointer-events: auto;
+}
+
+.control-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(5px);
+}
+
+.control-btn:hover {
+  background: var(--accent);
+  color: #000;
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(100, 255, 218, 0.3);
+}
+
+/* --- LOADING STATE --- */
+.loader-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  background: #05070c;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.5s;
+}
+
+.loader-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.radar {
+    width: 80px;
+    height: 80px;
+    border: 2px solid rgba(100, 255, 218, 0.3);
+    border-radius: 50%;
+    position: relative;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.radar::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--accent) 100%);
+    transform-origin: 0% 0%;
+    animation: scan 2s infinite linear;
+    box-shadow: 0 0 15px var(--accent);
+}
+
+.radar.error {
+    border-color: var(--danger);
+}
+
+.radar.error::after {
+    display: none;
+}
+
+@keyframes scan {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+h2 {
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+}
+
+p {
+    color: #8892b0;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+.retry-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+}
+
+.retry-btn:hover {
+    background: var(--danger);
+    color: #fff;
+}
+</style>
+</head>
+<body>
+
+<div class="viewer-container" id="container">
+    
+    <!-- Video Element -->
+    <video id="v" autoplay playsinline muted></video>
+
+    <!-- Loading Screen -->
+    <div class="loader-overlay" id="loader">
+        <div class="radar" id="radar-icon"></div>
+        <h2 id="loader-title">Establishing Secure Uplink</h2>
+        <p id="loader-desc">Negotiating WebRTC Handshake...</p>
+        <button class="retry-btn" id="retry-btn" style="display:none" onclick="window.location.reload()">Retry Connection</button>
+    </div>
+
+    <!-- HUD Overlay -->
+    <div class="hud-layer" id="hud">
+        
+        <!-- Header -->
+        <div class="hud-header">
+            <div class="status-badge">
+                <div class="status-dot" id="status-dot"></div>
+                <span id="status-text">INITIALIZING</span>
+            </div>
+            
+            <div class="meta-info">
+                CAM-01: GATE_ENTRY<br>
+                <span id="live-time">00:00:00</span>
+            </div>
+        </div>
+
+        <!-- Footer Controls -->
+        <div class="hud-footer">
+            <button class="control-btn" onclick="toggleMute()" title="Mute/Unmute">
+                <i class="fa-solid fa-volume-xmark" id="mute-icon"></i>
+            </button>
+            <button class="control-btn" onclick="snapshot()" title="Take Snapshot">
+                <i class="fa-solid fa-camera"></i>
+            </button>
+            <button class="control-btn" onclick="toggleFullScreen()" title="Fullscreen">
+                <i class="fa-solid fa-expand"></i>
+            </button>
+            <button class="control-btn" onclick="window.location.reload()" title="Reconnect">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- UI INTERACTION LOGIC ---
+const hud = document.getElementById('hud');
+const container = document.getElementById('container');
+let idleTimer;
+
+function resetIdleTimer() {
+    hud.classList.remove('idle');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+        hud.classList.add('idle');
+    }, 3000); // Hide after 3 seconds of inactivity
+}
+
+container.addEventListener('mousemove', resetIdleTimer);
+container.addEventListener('click', resetIdleTimer);
+resetIdleTimer();
+
+// Update Clock
+setInterval(() => {
+    const now = new Date();
+    document.getElementById('live-time').innerText = now.toLocaleTimeString();
+}, 1000);
+
+// Toggle Fullscreen
+function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+        container.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+// Toggle Mute
+const videoEl = document.getElementById('v');
+function toggleMute() {
+    videoEl.muted = !videoEl.muted;
+    const icon = document.getElementById('mute-icon');
+    if(videoEl.muted) {
+        icon.className = 'fa-solid fa-volume-xmark';
+    } else {
+        icon.className = 'fa-solid fa-volume-high';
+    }
+}
+
+// Snapshot Functionality
+function snapshot() {
+    const canvas = document.createElement('canvas');
+    canvas.width = videoEl.videoWidth;
+    canvas.height = videoEl.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+    
+    // Download logic
+    const link = document.createElement('a');
+    link.download = `snapshot-${Date.now()}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+}
+
+// --- WebRTC LOGIC ---
+const config = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" }
+    // Add TURN here if needed
+  ]
+};
+
+const pc = new RTCPeerConnection(config);
+const statusText = document.getElementById("status-text");
+const statusDot = document.getElementById("status-dot");
+const loader = document.getElementById("loader");
+const radarIcon = document.getElementById("radar-icon");
+const loaderTitle = document.getElementById("loader-title");
+const loaderDesc = document.getElementById("loader-desc");
+const retryBtn = document.getElementById("retry-btn");
+
+// 1. Connection State Handling
+pc.oniceconnectionstatechange = () => {
+    console.log("ICE State:", pc.iceConnectionState);
+    if(pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+        showError("SIGNAL LOST", "Connection dropped. Reconnecting...");
+        updateStatus("SIGNAL LOST", "error");
+    } else if (pc.iceConnectionState === 'connected') {
+        updateStatus("LIVE FEED", "active");
+        loader.classList.add("hidden"); // Hide loader
+    }
+};
+
+pc.ontrack = (e) => {
+    videoEl.srcObject = e.streams[0];
+    updateStatus("LIVE FEED", "active");
+    loader.classList.add("hidden");
+};
+
+function updateStatus(text, type) {
+    statusText.innerText = text;
+    statusDot.className = `status-dot ${type}`;
+    if (type === 'active') statusDot.style.animation = 'pulse 2s infinite';
+    else statusDot.style.animation = 'none';
+}
+
+function showError(title, desc) {
+    loader.classList.remove("hidden");
+    radarIcon.classList.add("error");
+    radarIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#ef4444; font-size:30px; line-height:76px; text-align:center; display:block;"></i>';
+    loaderTitle.innerText = title;
+    loaderTitle.style.color = "#ef4444";
+    loaderDesc.innerText = desc;
+    retryBtn.style.display = "block";
+    updateStatus(title, "error");
+}
+
+// 2. Negotiate connection
+(async () => {
+  try {
+      updateStatus("NEGOTIATING", "");
+      
+      const offer = await pc.createOffer({
+          offerToReceiveAudio: true, // Audio requested (muted by default in UI)
+          offerToReceiveVideo: true
+      });
+      await pc.setLocalDescription(offer);
+
+      // Send to Backend
+      const r = await fetch("https://api.feeparking.in/webrtc/offer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(offer)
+      });
+
+      if(!r.ok) throw new Error(`Server Response: ${r.status}`);
+
+      const answer = await r.json();
+      await pc.setRemoteDescription(answer);
+      
+      updateStatus("CONNECTING...", "");
+      
+  } catch (e) {
+      console.warn("WebRTC Signaling Error:", e);
+      showError("SIGNALING OFFLINE", "Unable to reach api.feeparking.in");
+  }
+})();
+</script>
+
+</body>
+</html>
