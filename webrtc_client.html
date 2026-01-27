@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FeeParking Live Stream</title>
+<style>
+  body {
+    margin: 0;
+    background: #0b0f1a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  video {
+    width: 90vw;
+    max-width: 1280px;
+    border: 3px solid #00ff99;
+    border-radius: 8px;
+    background: black;
+  }
+</style>
+</head>
+<body>
+
+<video id="video" autoplay playsinline></video>
+
+<script>
+async function start() {
+  const tokenRes = await fetch("https://api.feeparking.in/auth", { method: "POST" });
+  const tokenData = await tokenRes.json();
+
+  const pc = new RTCPeerConnection({
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "turn:turn.feeparking.in:3478", username: "user", credential: "pass" }
+    ]
+  });
+
+  pc.ontrack = event => {
+    document.getElementById("video").srcObject = event.streams[0];
+  };
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  const res = await fetch("https://stream.feeparking.in/offer", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + tokenData.token
+    },
+    body: JSON.stringify(offer)
+  });
+
+  const answer = await res.json();
+  await pc.setRemoteDescription(answer);
+}
+
+start();
+</script>
+
+</body>
+</html>
