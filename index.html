@@ -112,7 +112,7 @@
             padding: 4rem 3rem;
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
-            border-radius: 24px; /* Restored rounded corners */
+            border-radius: 24px;
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             box-shadow: 0 40px 100px -20px rgba(0,0,0,0.8);
@@ -184,33 +184,43 @@
         /* Mysterious Typewriter Text */
         .mystery-text {
             font-family: 'Courier New', monospace;
-            font-size: 1.4rem; /* Increased size for impact */
-            font-weight: 700;  /* Bold */
-            color: var(--accent);
-            letter-spacing: 0.1em; /* Wider spacing */
+            font-size: 1.8rem;
+            font-weight: 900;  
+            color: #ffffff;    
+            letter-spacing: 0.1em;
             min-height: 1.5em;
             position: relative;
             display: inline-block;
-            margin-top: 1rem;
-            margin-bottom: 3.5rem; /* More space around it */
-            text-shadow: 0 0 15px rgba(100, 255, 218, 0.6); /* Initial glow */
-            animation: pulseText 2s ease-in-out infinite alternate;
+            margin-top: 1.5rem;
+            margin-bottom: 4rem;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(100, 255, 218, 0.5);
+            animation: breathe 4s ease-in-out infinite alternate;
         }
         
-        @keyframes pulseText {
-            0% { text-shadow: 0 0 10px rgba(100, 255, 218, 0.4); opacity: 0.9; }
-            100% { text-shadow: 0 0 25px rgba(100, 255, 218, 0.9), 0 0 50px rgba(100, 255, 218, 0.4); opacity: 1; }
+        @keyframes breathe {
+            0% { 
+                text-shadow: 0 0 15px rgba(100, 255, 218, 0.4); 
+                transform: scale(1);
+                opacity: 0.9;
+            }
+            100% { 
+                text-shadow: 0 0 40px rgba(100, 255, 218, 0.8), 0 0 80px rgba(100, 255, 218, 0.4); 
+                transform: scale(1.02);
+                opacity: 1;
+            }
         }
         
         .mystery-text::after {
-            content: '█'; /* Block cursor looks more retro-powerful */
-            font-size: 1.2rem;
+            content: '█'; 
+            font-size: 1.8rem;
             position: absolute;
-            right: -20px;
+            right: -30px;
             animation: blink 0.8s step-end infinite;
             color: var(--accent);
-            opacity: 0.8;
-            top: 2px;
+            opacity: 1;
+            top: -2px;
+            box-shadow: 0 0 15px var(--accent);
         }
 
         @keyframes blink {
@@ -231,7 +241,7 @@
             letter-spacing: 1px;
             margin-bottom: 8px;
             display: flex;
-            justify-content: center; /* Center the label since no percentage */
+            justify-content: center; 
         }
 
         .loader-track {
@@ -248,7 +258,7 @@
             top: 0;
             left: 0;
             height: 100%;
-            width: 30%; /* Set width for animation */
+            width: 30%; 
             background: var(--accent);
             box-shadow: 0 0 15px var(--accent);
             border-radius: 2px;
@@ -452,7 +462,7 @@
             .chat-interface { height: 80vh; }
             .orb { opacity: 0.2; }
             .ai-fab { bottom: 20px; right: 20px; padding: 12px 20px; font-size: 0.8rem; }
-            .mystery-text { font-size: 1.1rem; } /* Adjusted mobile size */
+            .mystery-text { font-size: 1.1rem; }
         }
     </style>
 </head>
@@ -637,7 +647,7 @@
 
 
         // --- 3. REVEAL & TYPEWRITER EFFECT ---
-        const textToType = "Something powerful is coming.............";
+        const textToType = "Something powerful is coming soon .......";
         const typeWriterElement = document.getElementById('typewriter');
         const uplinkBtn = document.getElementById('uplink-btn');
         let typeIndex = 0;
@@ -646,12 +656,12 @@
             if (typeIndex < textToType.length) {
                 typeWriterElement.innerHTML += textToType.charAt(typeIndex);
                 typeIndex++;
-                setTimeout(typeWriter, 100); 
+                setTimeout(typeWriter, 120); 
             } else {
                 // Show button after typing finishes
                 setTimeout(() => {
                     uplinkBtn.classList.add('visible');
-                }, 500);
+                }, 800);
             }
         }
 
@@ -664,7 +674,7 @@
             }, 200);
         };
 
-        // --- 4. GEMINI API CHAT LOGIC ---
+        // --- 4. SECURE CHAT LOGIC (Via Cloudflare) ---
         const modal = document.getElementById('chat-modal');
         const closeBtn = document.getElementById('close-chat');
         const sendBtn = document.getElementById('send-btn');
@@ -693,21 +703,26 @@
             chatHistory.appendChild(loadingDiv);
             chatHistory.scrollTop = chatHistory.scrollHeight;
 
-            // 3. Call Gemini API
+            // 3. Call Cloudflare Worker (Secure Proxy)
             try {
-                const apiKey = ""; // API key is injected by environment
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                // IMPORTANT: Replace this with your actual Worker URL if you haven't set up the domain route
+                // Example: 'https://gemini-proxy.yourname.workers.dev'
+                const workerUrl = 'https://feeparking.in/api/chat'; 
+
+                const response = await fetch(workerUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: text }] }],
-                        systemInstruction: {
-                            parts: [{ text: "You are CORE, the artificial intelligence central unit of FeeParking. FeeParking is a next-generation smart parking infrastructure using ANPR (Automatic Number Plate Recognition) for ticketless, barrier-free access. Users are currently on a 'Coming Soon' page. Your goal is to build hype and explain the vision of seamless urban mobility. Keep responses cryptic but informative, futuristic, technical, and concise (under 50 words). Do not use markdown. If asked about release dates, say 'Deployment sequence initiated.'." }]
-                        }
-                    })
+                    body: JSON.stringify({ text: text }) // Send only user text; System prompt is hidden in Worker
                 });
 
+                // Handle HTTP errors
+                if (!response.ok) {
+                    throw new Error(`Uplink Error: ${response.status}`);
+                }
+
                 const data = await response.json();
+                
+                // Extract text from Gemini structure
                 const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "System Error: Neural link unstable.";
 
                 // 4. Replace Loading with AI Response
@@ -715,9 +730,15 @@
                 addMessage(aiText, 'ai');
 
             } catch (error) {
-                console.error(error);
+                console.error("Full Error:", error);
                 document.getElementById(loadingId).remove();
-                addMessage("Connection Interrupted. Retrying uplink...", 'ai');
+                
+                let errorMessage = "Connection Interrupted. Retrying uplink...";
+                if (error.message.includes("404")) {
+                    errorMessage = "System Error: Uplink endpoint not found. (Check Worker URL)";
+                }
+                
+                addMessage(errorMessage, 'ai');
             }
         }
 
@@ -732,6 +753,20 @@
         sendBtn.addEventListener('click', sendMessage);
         userInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
+        });
+
+        // --- 5. HIDDEN ADMIN BACKDOOR ---
+        document.addEventListener("keydown", (e) => {
+            // Press Ctrl + Shift + A
+            if (e.ctrlKey && e.shiftKey && (e.key === "A" || e.key === "a")) {
+                const pass = prompt("Enter System Access Code:");
+                if (pass === "FEEPARKING_ADMIN_2026") {
+                    // Navigate to the secure dashboard
+                    window.location.href = "admin.html";
+                } else if (pass) {
+                    alert("Access Denied: IP Logged.");
+                }
+            }
         });
 
     </script>
