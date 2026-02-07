@@ -427,7 +427,10 @@ function showError(title, desc) {
       // Send to Backend
       const r = await fetch("https://api.feeparking.in/webrtc/offer", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer FEEPARKING_SECURE_TOKEN"
+  },
         body: JSON.stringify(offer)
       });
 
