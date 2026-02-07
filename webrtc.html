@@ -425,7 +425,7 @@ function showError(title, desc) {
       await pc.setLocalDescription(offer);
 
       // Send to Backend
-      const r = await fetch("https://api.feeparking.in/offer", {
+      const r = await fetch("https://api.feeparking.in/webrtc/offer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(offer)
