@@ -2,108 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FeeParking | Command Nexus v4.0</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>FeeParking | Command Nexus v4.1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <style>
-        :root {
-            --bg-deep: #050507;
-            --bg-panel: rgba(20, 25, 35, 0.75);
-            --border: rgba(255, 255, 255, 0.08);
-            --text-main: #f4f4f5;
-            --text-muted: #94a3b8;
-            --accent: #3b82f6;
-            --success: #10b981;
-            --danger: #ef4444;
-            --glass-blur: blur(20px);
-        }
-
-        * { box-sizing: border-box; }
-        body { 
-            margin: 0; background-color: var(--bg-deep); color: var(--text-main); 
-            font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 13px; 
-        }
-
-        /* --- AUTH OVERLAY --- */
-        #auth-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .login-box { background: #111; border: 1px solid var(--border); padding: 35px; border-radius: 12px; width: 350px; text-align: center; }
-        .login-input { width: 100%; padding: 12px; margin-bottom: 15px; background: #1a1a1a; border: 1px solid var(--border); color: #fff; border-radius: 6px; font-family: 'JetBrains Mono'; }
-        .login-btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; }
-
-        /* --- LAYOUT --- */
-        header { height: 60px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 24px; }
-        .layout { display: grid; grid-template-columns: 320px 1fr 350px; flex: 1; overflow: hidden; }
-        .panel { border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--bg-panel); backdrop-filter: var(--glass-blur); }
-        .panel-head { padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+        :root { --bg: #050507; --panel: #111114; --border: rgba(255,255,255,0.08); --accent: #3b82f6; --success: #10b981; --danger: #ef4444; }
+        body { margin: 0; background: var(--bg); color: #f4f4f5; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        header { height: 60px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; justify-content: space-between; }
+        .layout { display: grid; grid-template-columns: 300px 1fr 350px; flex: 1; overflow: hidden; }
+        .panel { border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--panel); }
+        .panel-head { padding: 15px 20px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
         .panel-body { padding: 20px; overflow-y: auto; flex: 1; }
-
-        /* --- SLOTS --- */
-        .slots-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
-        .slot { background: rgba(30, 30, 35, 0.8); border: 1px solid var(--border); border-radius: 6px; padding: 12px; text-align: center; }
-        .slot.occ { border-left: 3px solid var(--danger); background: rgba(239, 68, 68, 0.05); }
-        .slot.free { border-left: 3px solid var(--success); }
-        .plate { font-family: 'JetBrains Mono'; font-weight: 700; font-size: 14px; margin: 4px 0; display: block; }
-        
-        .status-pill { background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono'; font-size: 11px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); }
-
-        .log-item { padding: 12px; border-bottom: 1px solid var(--border); font-size: 11px; }
-        .badge { padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 700; float: right; }
-        .badge.ENTRY { color: var(--success); background: rgba(16,185,129,0.1); }
+        .slots-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+        .slot { background: #1a1a1e; border: 1px solid var(--border); border-radius: 8px; padding: 15px; text-align: center; transition: 0.3s; }
+        .slot.occ { border-left: 4px solid var(--danger); }
+        .slot.free { border-left: 4px solid var(--success); }
+        .plate { font-family: 'JetBrains Mono'; font-weight: 700; font-size: 15px; margin: 5px 0; color: #fff; }
+        .log-item { padding: 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
+        .badge { float: right; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; background: rgba(16,185,129,0.1); color: var(--success); }
     </style>
 </head>
 <body>
 
-<div id="auth-overlay">
-    <div class="login-box">
-        <h2 style="margin-top:0"><i class="fa-solid fa-shield-halved"></i> NEXUS v4</h2>
-        <input type="email" id="login-user" class="login-input" placeholder="Admin Email">
-        <input type="password" id="login-pass" class="login-input" placeholder="Access Key">
-        <button class="login-btn" onclick="login()">AUTHENTICATE</button>
-        <div id="login-err" style="color:var(--danger); font-size:11px; margin-top:15px; display:none;">Invalid Credentials</div>
-    </div>
-</div>
-
 <header>
-    <div class="brand"><strong>FEEPARKING</strong> <span style="opacity:0.5; margin-left:5px">COMMAND NEXUS</span></div>
-    <div style="display:flex; gap:15px; align-items:center">
-        <div class="status-pill"><div class="dot"></div> ONLINE</div>
-        <div class="status-pill" id="user-display">--</div>
-        <button onclick="logout()" style="background:transparent; border:1px solid var(--border); color:#fff; cursor:pointer; padding:5px 10px; border-radius:4px;">LOGOUT</button>
-    </div>
+    <div><strong>FEEPARKING</strong> <span style="opacity:0.5; margin-left:5px">NEXUS v4.1</span></div>
+    <div id="status-tag" style="font-size: 11px; color: var(--success)">● REALTIME ACTIVE</div>
 </header>
 
 <div class="layout">
     <div class="panel">
-        <div class="panel-head">Edge Node Status</div>
+        <div class="panel-head">Edge Health</div>
         <div class="panel-body">
-            <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:6px; border:1px solid var(--border)">
-                <strong>RPi-5-EDGE</strong>
-                <div style="font-size:10px; color:var(--success); margin-top:5px">● STREAMING 29 FPS</div>
+            <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                <strong>RPi-5-GATEWAY</strong>
+                <div style="font-size: 10px; color: var(--success); margin-top: 5px;">STREAMING @ 29 FPS</div>
             </div>
-        </div>
-        <div class="panel-head">Manual Overrides</div>
-        <div class="panel-body">
-            <button class="login-btn" style="margin-bottom:10px">OPEN ENTRY GATE</button>
-            <button class="login-btn" style="background:var(--danger)">EMERGENCY EXIT</button>
         </div>
     </div>
 
     <div class="panel">
-        <div class="panel-head">
-            Live Infrastructure Map 
-            <span id="capacity-stat" style="float:right; color:#fff">-- / --</span>
-        </div>
-        <div class="panel-body">
-            <div class="slots-grid" id="slots-container"></div>
-        </div>
+        <div class="panel-head">Live Infrastructure Map <span id="cap" style="float:right; color:#fff"></span></div>
+        <div class="panel-body" id="slots-container"></div>
     </div>
 
-    <div class="panel" style="border-right:none">
-        <div class="panel-head">Real-time Audit Log</div>
+    <div class="panel" style="border:none">
+        <div class="panel-head">Audit Log Feed</div>
         <div id="log-feed" class="panel-body" style="padding:0"></div>
     </div>
 </div>
@@ -111,69 +54,43 @@
 <script>
     const SB_URL = "https://vlxyoxuejydfpclhxczr.supabase.co";
     const SB_KEY = "sb_publishable_X8F1t9Qs_bznY7OrJtp0Ew_wQDe_7qV";
-    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+    const supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
-    async function login() {
-        const email = document.getElementById("login-user").value;
-        const password = document.getElementById("login-pass").value;
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        
-        if (error) {
-            document.getElementById("login-err").style.display = "block";
-        } else {
-            location.reload();
-        }
-    }
+    async function updateUI() {
+        const { data: slots } = await supabase.from('Slots').select('*').order('name', { ascending: true });
+        if (!slots) return;
 
-    async function checkAuth() {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
-            document.getElementById("auth-overlay").style.display = "none";
-            document.getElementById("user-display").innerText = session.user.email;
-            init();
-        }
-    }
-
-    function logout() { supabaseClient.auth.signOut(); location.reload(); }
-
-    function init() {
-        fetchData();
-        setInterval(fetchData, 3000);
-    }
-
-    async function fetchData() {
-        // Fetch Slots from Supabase
-        const { data: slots } = await supabaseClient.from('Slots').select('*');
-        if (slots) updateUI(slots);
-    }
-
-    function updateUI(slots) {
         const container = document.getElementById("slots-container");
         const logFeed = document.getElementById("log-feed");
         const occ = slots.filter(s => s.current_occupancy > 0).length;
-        
-        document.getElementById("capacity-stat").innerText = `${slots.length - occ} VACANT`;
+        document.getElementById("cap").innerText = `${slots.length - occ} / ${slots.length} FREE`;
 
-        container.innerHTML = slots.map(s => `
+        container.innerHTML = `<div class="slots-grid">${slots.map(s => `
             <div class="slot ${s.current_occupancy ? 'occ' : 'free'}">
                 <div style="font-size:9px; opacity:0.5">${s.name}</div>
-                <span class="plate">${s.metadata?.last_plate || '---'}</span>
-                <div style="font-size:9px">${s.current_occupancy ? 'OCCUPIED' : 'VACANT'}</div>
+                <div class="plate">${s.metadata?.last_plate || '---'}</div>
+                <div style="font-size:10px">${s.current_occupancy ? 'OCCUPIED' : 'VACANT'}</div>
             </div>
-        `).join('');
+        `).join('')}</div>`;
 
-        // Update Log Feed from metadata history
-        const activity = slots.filter(s => s.metadata?.last_plate);
-        logFeed.innerHTML = activity.map(a => `
+        const logs = slots.filter(s => s.metadata?.last_plate).sort((a,b) => b.updated_at.localeCompare(a.updated_at));
+        logFeed.innerHTML = logs.map(l => `
             <div class="log-item">
-                <span class="badge ${a.metadata.direction}">${a.metadata.direction}</span>
-                <strong>${a.metadata.last_plate}</strong><br>
-                <span style="opacity:0.4">${new Date(a.updated_at).toLocaleTimeString()}</span>
+                <span class="badge">${l.metadata.direction}</span>
+                <strong>${l.metadata.last_plate}</strong><br>
+                <span style="opacity:0.4; font-size:10px">${new Date(l.updated_at).toLocaleTimeString()}</span>
             </div>
         `).join('');
     }
 
-    checkAuth();
+    // Initialize Realtime Listener
+    supabase.channel('custom-all-channel')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'Slots' }, (payload) => {
+        console.log('Change received!', payload);
+        updateUI();
+    }).subscribe();
+
+    updateUI();
 </script>
 </body>
 </html>
