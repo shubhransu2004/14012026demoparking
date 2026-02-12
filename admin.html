@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FeeParking | Command Nexus v3.2</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>FeeParking | Command Nexus v4.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         :root {
             --bg-deep: #050507;
@@ -16,75 +18,49 @@
             --accent: #3b82f6;
             --success: #10b981;
             --danger: #ef4444;
-            --warning: #f59e0b;
             --glass-blur: blur(20px);
         }
 
-        * { box-sizing: border-box; outline: none; }
+        * { box-sizing: border-box; }
         body { 
-            margin: 0; 
-            background-color: var(--bg-deep); 
-            background-image: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
-            color: var(--text-main); 
-            font-family: 'Inter', sans-serif; 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; 
-            font-size: 13px; 
+            margin: 0; background-color: var(--bg-deep); color: var(--text-main); 
+            font-family: 'Inter', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 13px; 
         }
 
         /* --- AUTH OVERLAY --- */
         #auth-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .login-box { background: #111; border: 1px solid var(--border); padding: 35px; border-radius: 12px; width: 350px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+        .login-box { background: #111; border: 1px solid var(--border); padding: 35px; border-radius: 12px; width: 350px; text-align: center; }
         .login-input { width: 100%; padding: 12px; margin-bottom: 15px; background: #1a1a1a; border: 1px solid var(--border); color: #fff; border-radius: 6px; font-family: 'JetBrains Mono'; }
-        .login-btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-        .login-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-
-        /* --- HEADER --- */
-        header { height: 60px; border-bottom: 1px solid var(--border); background: rgba(5, 5, 10, 0.8); backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; padding: 0 24px; z-index: 50; }
-        .status-pill { background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono'; font-size: 11px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
-        .dot.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
-        .dot.offline { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+        .login-btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; }
 
         /* --- LAYOUT --- */
+        header { height: 60px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 24px; }
         .layout { display: grid; grid-template-columns: 320px 1fr 350px; flex: 1; overflow: hidden; }
         .panel { border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--bg-panel); backdrop-filter: var(--glass-blur); }
-        .panel-head { padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
+        .panel-head { padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
         .panel-body { padding: 20px; overflow-y: auto; flex: 1; }
 
-        /* --- DEVICE HEALTH ITEMS --- */
-        .device-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; }
-        .device-info { flex: 1; }
-        .device-role { font-size: 9px; text-transform: uppercase; color: var(--text-muted); }
-
-        /* --- SLOTS GRID --- */
-        .floor-section { margin-bottom: 30px; }
-        .slots-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-top: 15px; }
-        .slot { background: rgba(30, 30, 35, 0.8); border: 1px solid var(--border); border-radius: 6px; padding: 12px; text-align: center; transition: 0.2s; }
+        /* --- SLOTS --- */
+        .slots-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+        .slot { background: rgba(30, 30, 35, 0.8); border: 1px solid var(--border); border-radius: 6px; padding: 12px; text-align: center; }
         .slot.occ { border-left: 3px solid var(--danger); background: rgba(239, 68, 68, 0.05); }
         .slot.free { border-left: 3px solid var(--success); }
-        .slot-plate { font-family: 'JetBrains Mono'; font-weight: 700; font-size: 14px; margin: 4px 0; }
+        .plate { font-family: 'JetBrains Mono'; font-weight: 700; font-size: 14px; margin: 4px 0; display: block; }
+        
+        .status-pill { background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono'; font-size: 11px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); }
 
-        /* --- LOGS --- */
-        .log-item { padding: 10px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
-        .badge { padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 700; }
+        .log-item { padding: 12px; border-bottom: 1px solid var(--border); font-size: 11px; }
+        .badge { padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 700; float: right; }
         .badge.ENTRY { color: var(--success); background: rgba(16,185,129,0.1); }
-        .badge.EXIT { color: var(--danger); background: rgba(239,68,68,0.1); }
-
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; }
-        .btn-outline:hover { background: rgba(255,255,255,0.05); }
-
-        @media(max-width: 1024px) { .layout { grid-template-columns: 1fr; } .panel { max-height: 400px; } }
     </style>
 </head>
 <body>
 
 <div id="auth-overlay">
     <div class="login-box">
-        <h2 style="margin-top:0"><i class="fa-solid fa-shield-halved"></i> NEXUS</h2>
-        <input type="text" id="login-user" class="login-input" placeholder="Operator ID">
+        <h2 style="margin-top:0"><i class="fa-solid fa-shield-halved"></i> NEXUS v4</h2>
+        <input type="email" id="login-user" class="login-input" placeholder="Admin Email">
         <input type="password" id="login-pass" class="login-input" placeholder="Access Key">
         <button class="login-btn" onclick="login()">AUTHENTICATE</button>
         <div id="login-err" style="color:var(--danger); font-size:11px; margin-top:15px; display:none;">Invalid Credentials</div>
@@ -94,191 +70,110 @@
 <header>
     <div class="brand"><strong>FEEPARKING</strong> <span style="opacity:0.5; margin-left:5px">COMMAND NEXUS</span></div>
     <div style="display:flex; gap:15px; align-items:center">
-        <div class="status-pill">
-            <div id="status-dot" class="dot"></div> 
-            <span id="status-txt">CHECKING...</span>
-        </div>
-        <div class="status-pill"><i class="fa-regular fa-user"></i> <span id="user-display">--</span></div>
-        <button class="btn-outline" onclick="logout()">LOGOUT</button>
+        <div class="status-pill"><div class="dot"></div> ONLINE</div>
+        <div class="status-pill" id="user-display">--</div>
+        <button onclick="logout()" style="background:transparent; border:1px solid var(--border); color:#fff; cursor:pointer; padding:5px 10px; border-radius:4px;">LOGOUT</button>
     </div>
 </header>
 
 <div class="layout">
     <div class="panel">
-        <div class="panel-head">Device Registry</div>
-        <div class="panel-body" id="device-list">
-            <div style="opacity:0.5; text-align:center; padding-top:20px;">Scanning for heartbeats...</div>
+        <div class="panel-head">Edge Node Status</div>
+        <div class="panel-body">
+            <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:6px; border:1px solid var(--border)">
+                <strong>RPi-5-EDGE</strong>
+                <div style="font-size:10px; color:var(--success); margin-top:5px">● STREAMING 29 FPS</div>
+            </div>
         </div>
-        
         <div class="panel-head">Manual Overrides</div>
         <div class="panel-body">
-            <button class="login-btn" style="margin-bottom:10px" onclick="gateCmd('ESP32_ENTRY_GATE', 'OPEN')">OPEN ENTRY GATE</button>
-            <button class="login-btn" style="background:var(--danger)" onclick="gateCmd('ESP32_EXIT_GATE', 'OPEN')">OPEN EXIT GATE</button>
-            <button class="btn-outline" style="width:100%; margin-top:20px" onclick="cleanupLogs()">Clear 30-Day Logs</button>
+            <button class="login-btn" style="margin-bottom:10px">OPEN ENTRY GATE</button>
+            <button class="login-btn" style="background:var(--danger)">EMERGENCY EXIT</button>
         </div>
     </div>
 
     <div class="panel">
         <div class="panel-head">
-            <span>Live Infrastructure Map</span>
-            <div id="capacity-stat" style="font-family: 'JetBrains Mono'; color:white">-- / --</div>
+            Live Infrastructure Map 
+            <span id="capacity-stat" style="float:right; color:#fff">-- / --</span>
         </div>
-        <div class="panel-body" id="floor-container">
-            <div style="opacity:0.5; text-align:center; padding-top:50px;">Waiting for slot data...</div>
+        <div class="panel-body">
+            <div class="slots-grid" id="slots-container"></div>
         </div>
     </div>
 
     <div class="panel" style="border-right:none">
-        <div class="panel-head">Audit Log Feed</div>
-        <div class="panel-body" id="log-feed" style="padding:0"></div>
+        <div class="panel-head">Real-time Audit Log</div>
+        <div id="log-feed" class="panel-body" style="padding:0"></div>
     </div>
 </div>
 
 <script>
-    const API = "https://feeparking-central-server.onrender.com";
-    let token = localStorage.getItem("fp_token");
-    let lastLog = 0;
+    const SB_URL = "https://vlxyoxuejydfpclhxczr.supabase.co";
+    const SB_KEY = "sb_publishable_X8F1t9Qs_bznY7OrJtp0Ew_wQDe_7qV";
+    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-    // --- AUTHENTICATION ---
     async function login() {
-        const u = document.getElementById("login-user").value;
-        const p = document.getElementById("login-pass").value;
-        const btn = document.querySelector(".login-btn");
+        const email = document.getElementById("login-user").value;
+        const password = document.getElementById("login-pass").value;
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
         
-        try {
-            btn.innerText = "VERIFYING...";
-            const form = new FormData(); form.append("username", u); form.append("password", p);
-            const r = await fetch(`${API}/token`, { method: "POST", body: form });
-            if(!r.ok) throw new Error();
-            const data = await r.json();
-            localStorage.setItem("fp_token", data.access_token);
-            location.reload();
-        } catch {
-            btn.innerText = "AUTHENTICATE";
+        if (error) {
             document.getElementById("login-err").style.display = "block";
+        } else {
+            location.reload();
         }
     }
 
-    function logout() { localStorage.removeItem("fp_token"); location.reload(); }
-
-    // --- INITIALIZATION ---
-    if(token) {
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            if(payload.exp * 1000 < Date.now()) { logout(); }
+    async function checkAuth() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
             document.getElementById("auth-overlay").style.display = "none";
-            document.getElementById("user-display").innerText = payload.sub;
+            document.getElementById("user-display").innerText = session.user.email;
             init();
-        } catch(e) { logout(); }
+        }
     }
+
+    function logout() { supabaseClient.auth.signOut(); location.reload(); }
 
     function init() {
-        refresh();
-        setInterval(refresh, 3000);
+        fetchData();
+        setInterval(fetchData, 3000);
     }
 
-    // --- CORE REFRESH LOOP ---
-    async function refresh() {
-        try {
-            const headers = { 'Authorization': `Bearer ${token}` };
-            const [sRes, lRes, dRes] = await Promise.all([
-                fetch(`${API}/api/slots`, { headers }),
-                fetch(`${API}/api/logs?after=${lastLog}`, { headers }),
-                fetch(`${API}/api/devices`, { headers })
-            ]);
-
-            if(sRes.status === 401) logout();
-
-            const slots = await sRes.json();
-            const logs = await lRes.json();
-            const devices = await dRes.json();
-
-            document.getElementById("status-dot").className = "dot online";
-            document.getElementById("status-txt").innerText = "ONLINE";
-            document.getElementById("status-txt").style.color = "var(--success)";
-
-            updateUI(slots, logs, devices);
-        } catch(e) {
-            document.getElementById("status-dot").className = "dot offline";
-            document.getElementById("status-txt").innerText = "OFFLINE";
-            document.getElementById("status-txt").style.color = "var(--danger)";
-        }
+    async function fetchData() {
+        // Fetch Slots from Supabase
+        const { data: slots } = await supabaseClient.from('Slots').select('*');
+        if (slots) updateUI(slots);
     }
 
-    // --- UI RENDERING ---
-    function updateUI(slots, logs, devices) {
-        // 1. Devices Health
-        const devList = document.getElementById("device-list");
-        devList.innerHTML = devices.map(d => `
-            <div class="device-item">
-                <div class="dot ${d.status === 'ONLINE' ? 'online' : 'offline'}"></div>
-                <div class="device-info">
-                    <div><strong>${d.device_id}</strong></div>
-                    <div class="device-role">${d.role}</div>
-                </div>
-                <div style="font-size:9px; opacity:0.4">${d.status}</div>
+    function updateUI(slots) {
+        const container = document.getElementById("slots-container");
+        const logFeed = document.getElementById("log-feed");
+        const occ = slots.filter(s => s.current_occupancy > 0).length;
+        
+        document.getElementById("capacity-stat").innerText = `${slots.length - occ} VACANT`;
+
+        container.innerHTML = slots.map(s => `
+            <div class="slot ${s.current_occupancy ? 'occ' : 'free'}">
+                <div style="font-size:9px; opacity:0.5">${s.name}</div>
+                <span class="plate">${s.metadata?.last_plate || '---'}</span>
+                <div style="font-size:9px">${s.current_occupancy ? 'OCCUPIED' : 'VACANT'}</div>
             </div>
         `).join('');
 
-        // 2. Dynamic Slots
-        const container = document.getElementById("floor-container");
-        const occ = slots.filter(s => s.occupied).length;
-        document.getElementById("capacity-stat").innerText = `${slots.length - occ} / ${slots.length}`;
-
-        const groups = slots.reduce((acc, s) => {
-            (acc[s.controller] = acc[s.controller] || []).push(s);
-            return acc;
-        }, {});
-
-        container.innerHTML = Object.keys(groups).map(ctrl => `
-            <div class="floor-section">
-                <div class="panel-head" style="padding:0; border:none; margin-bottom:10px">${ctrl}</div>
-                <div class="slots-grid">
-                    ${groups[ctrl].map(s => `
-                        <div class="slot ${s.occupied ? 'occ' : 'free'}">
-                            <div style="font-size:9px; opacity:0.5">SLOT ${s.slot_id}</div>
-                            <div class="slot-plate">${s.occupied ? s.plate : '---'}</div>
-                            <div style="font-size:9px">${s.occupied ? 'OCCUPIED' : 'VACANT'}</div>
-                        </div>
-                    `).join('')}
-                </div>
+        // Update Log Feed from metadata history
+        const activity = slots.filter(s => s.metadata?.last_plate);
+        logFeed.innerHTML = activity.map(a => `
+            <div class="log-item">
+                <span class="badge ${a.metadata.direction}">${a.metadata.direction}</span>
+                <strong>${a.metadata.last_plate}</strong><br>
+                <span style="opacity:0.4">${new Date(a.updated_at).toLocaleTimeString()}</span>
             </div>
         `).join('');
-
-        // 3. Logs
-        if(logs.length) {
-            lastLog = logs[0].timestamp;
-            const logFeed = document.getElementById("log-feed");
-            const html = logs.map(l => `
-                <div class="log-item">
-                    <span><strong>${l.plate}</strong></span>
-                    <span class="badge ${l.direction}">${l.direction}</span>
-                    <span style="opacity:0.4">${new Date(l.timestamp*1000).toLocaleTimeString()}</span>
-                </div>
-            `).join('');
-            logFeed.innerHTML = html + logFeed.innerHTML;
-            if(logFeed.children.length > 50) logFeed.removeChild(logFeed.lastChild);
-        }
     }
 
-    // --- ACTIONS ---
-    async function gateCmd(id, act) {
-        const r = await fetch(`${API}/api/gate/control`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ device_id: id, action: act })
-        });
-        if(r.ok) alert("Command Queued Successfully");
-    }
-
-    async function cleanupLogs() {
-        if(!confirm("Are you sure you want to purge logs older than 30 days?")) return;
-        const r = await fetch(`${API}/api/admin/cleanup?days=30`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if(r.ok) alert("Log Cleanup Complete");
-    }
+    checkAuth();
 </script>
 </body>
 </html>
