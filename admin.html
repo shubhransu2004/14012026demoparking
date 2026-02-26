@@ -1,96 +1,398 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>FeeParking | Command Nexus v4.1</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root { --bg: #050507; --panel: #111114; --border: rgba(255,255,255,0.08); --accent: #3b82f6; --success: #10b981; --danger: #ef4444; }
-        body { margin: 0; background: var(--bg); color: #f4f4f5; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        header { height: 60px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; justify-content: space-between; }
-        .layout { display: grid; grid-template-columns: 300px 1fr 350px; flex: 1; overflow: hidden; }
-        .panel { border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--panel); }
-        .panel-head { padding: 15px 20px; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
-        .panel-body { padding: 20px; overflow-y: auto; flex: 1; }
-        .slots-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
-        .slot { background: #1a1a1e; border: 1px solid var(--border); border-radius: 8px; padding: 15px; text-align: center; transition: 0.3s; }
-        .slot.occ { border-left: 4px solid var(--danger); }
-        .slot.free { border-left: 4px solid var(--success); }
-        .plate { font-family: 'JetBrains Mono'; font-weight: 700; font-size: 15px; margin: 5px 0; color: #fff; }
-        .log-item { padding: 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
-        .badge { float: right; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; background: rgba(16,185,129,0.1); color: var(--success); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FeeParking | Command Nexus</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg:        #020204;
+  --panel:     #0a0a0d;
+  --panel2:    #0f0f14;
+  --border:    rgba(255,255,255,0.06);
+  --border2:   rgba(255,255,255,0.1);
+  --accent:    #64ffda;
+  --accent-d:  rgba(100,255,218,0.08);
+  --accent-m:  rgba(100,255,218,0.2);
+  --danger:    #ef4444;
+  --warn:      #f59e0b;
+  --text:      #f4f4f5;
+  --muted:     #52525b;
+  --muted2:    #71717a;
+  --ui:        'Inter',sans-serif;
+  --mono:      'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--ui);font-size:13px;display:flex;flex-direction:column}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.05) 2px,rgba(0,0,0,0.05) 4px);pointer-events:none;z-index:9999}
+
+/* HEADER */
+header{height:56px;min-height:56px;background:var(--panel);border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:100;gap:16px;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-hex{width:32px;height:32px;background:var(--accent);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:grid;place-items:center;animation:hpulse 3s ease-in-out infinite}
+@keyframes hpulse{0%,100%{opacity:1}50%{opacity:.8}}
+.brand-hex i{font-size:11px;color:#000}
+.brand-name{font-size:14px;font-weight:700;letter-spacing:.1em}
+.brand-sub{font-family:var(--mono);font-size:9px;color:var(--muted2);letter-spacing:.15em;margin-top:1px}
+.hstats{display:flex;gap:24px;align-items:center}
+.hstat{display:flex;flex-direction:column;align-items:center;gap:1px}
+.hstat-v{font-family:var(--mono);font-size:18px;font-weight:700;line-height:1}
+.hstat-v.e{color:var(--accent)} .hstat-v.x{color:var(--danger)} .hstat-v.t{color:var(--warn)}
+.hstat-l{font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.15em}
+.dvdr{width:1px;height:28px;background:var(--border2)}
+.hright{display:flex;align-items:center;gap:10px}
+.cbadge{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--muted2);padding:5px 12px;border:1px solid var(--border2);border-radius:3px;transition:all .3s}
+.cbadge.live{color:var(--accent);border-color:var(--accent-m)}
+.cbadge.err{color:var(--danger);border-color:rgba(239,68,68,.3)}
+.pdot{width:6px;height:6px;border-radius:50%;background:var(--muted2);transition:background .3s}
+.cbadge.live .pdot{background:var(--accent);animation:pblink 1.4s ease-in-out infinite}
+.cbadge.err .pdot{background:var(--danger)}
+@keyframes pblink{0%,100%{opacity:1}50%{opacity:.2}}
+#clock{font-family:var(--mono);font-size:11px;color:var(--muted2);letter-spacing:.08em;border:1px solid var(--border);padding:5px 10px;border-radius:3px}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:260px 1fr 300px;flex:1;overflow:hidden;min-height:0}
+.panel{display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden;background:var(--panel)}
+.panel:last-child{border-right:none}
+.ph{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:rgba(255,255,255,.01)}
+.pt{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:var(--muted2);display:flex;align-items:center;gap:8px}
+.pt i{color:var(--accent);font-size:11px}
+.pb{flex:1;overflow-y:auto;min-height:0}
+.pb::-webkit-scrollbar{width:3px}
+.pb::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* LEFT */
+.mblock{padding:14px 16px;border-bottom:1px solid var(--border)}
+.mlabel{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.2em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.mlabel::after{content:'';flex:1;height:1px;background:var(--border)}
+.dcard{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:11px;display:flex;flex-direction:column;gap:7px;margin-bottom:8px}
+.dcard.on{border-left:2px solid var(--accent)} .dcard.off{border-left:2px solid var(--danger)}
+.dtop{display:flex;align-items:center;justify-content:space-between}
+.dname{font-family:var(--mono);font-size:11px;font-weight:700}
+.dst{font-size:9px;font-weight:700;padding:2px 7px;border-radius:2px;letter-spacing:.1em}
+.dst.on{background:rgba(100,255,218,.1);color:var(--accent)} .dst.off{background:rgba(239,68,68,.1);color:var(--danger)}
+.dsub{font-size:10px;color:var(--muted2)}
+.brow{margin-bottom:7px}
+.btop{display:flex;justify-content:space-between;font-size:9px;color:var(--muted2);margin-bottom:3px;font-family:var(--mono)}
+.btrack{height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.bfill{height:100%;background:var(--accent);border-radius:2px;transition:width 1s ease}
+.bfill.w{background:var(--warn)} .bfill.d{background:var(--danger)}
+.occbig{text-align:center;padding:16px 0}
+.occnum{font-family:var(--mono);font-size:42px;font-weight:700;color:var(--accent);line-height:1}
+.occlbl{font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.2em;margin-top:6px}
+.grow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
+.grow:last-child{border-bottom:none}
+.glbl{font-size:11px;font-weight:500}
+.gsub{font-size:9px;color:var(--muted2)}
+.gbtn{background:transparent;border:1px solid var(--border2);color:var(--text);padding:5px 11px;font-size:10px;font-family:var(--mono);font-weight:700;letter-spacing:.1em;cursor:pointer;border-radius:3px;transition:all .2s}
+.gbtn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-d)}
+.gbtn:active{transform:scale(.97)}
+
+/* CENTER */
+.cpanel{background:var(--bg);border-right:1px solid var(--border)}
+.fbar{padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;flex-shrink:0}
+.fbtn{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;padding:5px 11px;border-radius:3px;border:1px solid var(--border2);background:transparent;color:var(--muted2);cursor:pointer;transition:all .2s}
+.fbtn.act{color:var(--accent);border-color:var(--accent-m);background:var(--accent-d)}
+.fbtn:hover:not(.act){color:var(--text)}
+.fsp{flex:1}
+.sbox{background:var(--panel);border:1px solid var(--border2);color:var(--text);padding:5px 11px;font-family:var(--mono);font-size:10px;border-radius:3px;width:150px;outline:none;transition:border-color .2s}
+.sbox::placeholder{color:var(--muted)}
+.sbox:focus{border-color:var(--accent)}
+.cscroll{flex:1;overflow-y:auto;min-height:0}
+.cscroll::-webkit-scrollbar{width:3px}
+.cscroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.etbl{width:100%;border-collapse:collapse}
+.etbl thead th{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.18em;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);background:rgba(255,255,255,.01);position:sticky;top:0;z-index:10}
+.etbl tbody tr{border-bottom:1px solid var(--border);transition:background .15s;animation:rowin .3s ease-out}
+@keyframes rowin{from{opacity:0;transform:translateY(-5px);background:rgba(100,255,218,.05)}to{opacity:1;transform:translateY(0);background:transparent}}
+.etbl tbody tr:hover{background:rgba(255,255,255,.02)}
+.etbl td{padding:9px 12px;vertical-align:middle;font-family:var(--mono);font-size:11px}
+.pv{font-size:13px;font-weight:700;color:var(--text);letter-spacing:.05em}
+.ebadge{display:inline-block;padding:2px 7px;border-radius:2px;font-size:9px;font-weight:700;letter-spacing:.12em}
+.ebadge.ENTRY{background:rgba(100,255,218,.1);color:var(--accent);border:1px solid rgba(100,255,218,.25)}
+.ebadge.EXIT{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.25)}
+.cw{display:flex;align-items:center;gap:6px}
+.cb{width:44px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+.cf{height:100%;border-radius:2px}
+.cp{font-size:10px;color:var(--muted2)}
+.sbtn{background:transparent;border:1px solid var(--border2);color:var(--muted2);font-size:9px;font-family:var(--mono);padding:3px 7px;border-radius:2px;cursor:pointer;text-decoration:none;transition:all .2s;letter-spacing:.08em}
+.sbtn:hover{color:var(--accent);border-color:var(--accent-m)}
+.tv{color:var(--muted2);font-size:10px}
+.empt{text-align:center;padding:60px 20px;color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:.15em;line-height:2}
+.ibtn{background:transparent;border:1px solid var(--border);color:var(--muted2);width:28px;height:28px;border-radius:3px;display:grid;place-items:center;cursor:pointer;font-size:11px;transition:all .2s}
+.ibtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* RIGHT LOG */
+.li{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:4px;cursor:pointer;transition:background .15s;position:relative}
+.li:hover{background:rgba(255,255,255,.02)}
+.li.fl{animation:lfl .7s ease-out}
+@keyframes lfl{0%{background:rgba(100,255,218,.1)}100%{background:transparent}}
+.li::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px}
+.li.ENTRY::before{background:var(--accent)} .li.EXIT::before{background:var(--danger)}
+.lt{display:flex;justify-content:space-between;align-items:center}
+.lp{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);letter-spacing:.05em}
+.lb{font-size:8px;font-weight:700;padding:2px 6px;border-radius:2px;letter-spacing:.12em}
+.lb.ENTRY{background:rgba(100,255,218,.1);color:var(--accent)}
+.lb.EXIT{background:rgba(239,68,68,.1);color:var(--danger)}
+.lb2{display:flex;justify-content:space-between}
+.ltime{font-size:10px;color:var(--muted2);font-family:var(--mono)}
+.ldev{font-size:10px;color:var(--muted);font-family:var(--mono)}
+
+/* MODAL */
+.mdbg{position:fixed;inset:0;background:rgba(0,0,0,.87);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(10px)}
+.mdbg.open{display:flex}
+.mdbox{background:var(--panel);border:1px solid var(--border2);border-radius:8px;max-width:680px;width:90%;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,.8)}
+.mdh{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border)}
+.mdt{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em}
+.mdc{background:transparent;border:none;color:var(--muted2);cursor:pointer;font-size:16px;transition:color .2s}
+.mdc:hover{color:var(--text)}
+.mdi{width:100%;max-height:60vh;object-fit:contain;background:#000}
+.mdm{padding:12px 20px;display:flex;gap:20px;font-family:var(--mono);font-size:11px;color:var(--muted2);flex-wrap:wrap}
+.mdm span{color:var(--text)}
+
+/* TOAST */
+.twrap{position:fixed;top:68px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--panel2);border:1px solid var(--border2);border-left:3px solid var(--accent);padding:10px 16px;font-size:11px;font-family:var(--mono);letter-spacing:.08em;color:var(--text);border-radius:3px;min-width:220px;max-width:280px;animation:tin .3s ease-out;box-shadow:0 10px 30px rgba(0,0,0,.6);transition:opacity .4s}
+.toast.EXIT{border-left-color:var(--danger)}
+@keyframes tin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.tp{font-size:13px;font-weight:700}
+.ts{font-size:10px;color:var(--muted2);margin-top:2px}
+</style>
 </head>
 <body>
 
 <header>
-    <div><strong>FEEPARKING</strong> <span style="opacity:0.5; margin-left:5px">NEXUS v4.1</span></div>
-    <div id="status-tag" style="font-size: 11px; color: var(--success)">● REALTIME ACTIVE</div>
+  <div class="brand">
+    <div class="brand-hex"><i class="fa-solid fa-cube"></i></div>
+    <div>
+      <div class="brand-name">FEEPARKING</div>
+      <div class="brand-sub">COMMAND NEXUS · LIVE OPS</div>
+    </div>
+  </div>
+  <div class="hstats">
+    <div class="hstat"><div class="hstat-v e" id="h-en">—</div><div class="hstat-l">Entries</div></div>
+    <div class="dvdr"></div>
+    <div class="hstat"><div class="hstat-v x" id="h-ex">—</div><div class="hstat-l">Exits</div></div>
+    <div class="dvdr"></div>
+    <div class="hstat"><div class="hstat-v t" id="h-tot">—</div><div class="hstat-l">All Time</div></div>
+  </div>
+  <div class="hright">
+    <div class="cbadge" id="cb"><div class="pdot" id="pd"></div><span id="cl">CONNECTING</span></div>
+    <div id="clock">00:00:00</div>
+  </div>
 </header>
 
 <div class="layout">
-    <div class="panel">
-        <div class="panel-head">Edge Health</div>
-        <div class="panel-body">
-            <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
-                <strong>RPi-5-GATEWAY</strong>
-                <div style="font-size: 10px; color: var(--success); margin-top: 5px;">STREAMING @ 29 FPS</div>
-            </div>
+
+  <!-- LEFT -->
+  <div class="panel">
+    <div class="ph"><div class="pt"><i class="fa-solid fa-microchip"></i>Telemetry</div></div>
+    <div class="pb">
+      <div class="mblock">
+        <div class="mlabel">Edge Nodes</div>
+        <div class="dcard on">
+          <div class="dtop"><span class="dname">PI_GATE_1</span><span class="dst on">ONLINE</span></div>
+          <div class="dsub">Raspberry Pi 5 · IMX708 NoIR</div>
+          <div class="brow" style="margin-top:4px">
+            <div class="btop"><span>ANPR FPS</span><span>29</span></div>
+            <div class="btrack"><div class="bfill" style="width:97%"></div></div>
+          </div>
         </div>
+        <div class="dcard off">
+          <div class="dtop"><span class="dname">ESP32_NODES</span><span class="dst off">PENDING</span></div>
+          <div class="dsub">Slot sensors · MQTT bridge</div>
+        </div>
+      </div>
+      <div class="mblock">
+        <div class="mlabel">Live Occupancy</div>
+        <div class="occbig">
+          <div class="occnum" id="occ-n">—</div>
+          <div class="occlbl">vehicles inside</div>
+        </div>
+      </div>
+      <div class="mblock">
+        <div class="mlabel">Today's Throughput</div>
+        <div class="brow">
+          <div class="btop"><span>ENTRIES</span><span id="er">—</span></div>
+          <div class="btrack"><div class="bfill" id="eb" style="width:0%"></div></div>
+        </div>
+        <div class="brow">
+          <div class="btop"><span>EXITS</span><span id="xr">—</span></div>
+          <div class="btrack"><div class="bfill w" id="xb" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="mblock">
+        <div class="mlabel">Gate Override</div>
+        <div class="grow">
+          <div><div class="glbl">ENTRY GATE</div><div class="gsub">ESP32_GATE_ENTRY</div></div>
+          <button class="gbtn" onclick="gcmd('ENTRY')">OPEN</button>
+        </div>
+        <div class="grow">
+          <div><div class="glbl">EXIT GATE</div><div class="gsub">ESP32_GATE_EXIT</div></div>
+          <button class="gbtn" onclick="gcmd('EXIT')">OPEN</button>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <div class="panel">
-        <div class="panel-head">Live Infrastructure Map <span id="cap" style="float:right; color:#fff"></span></div>
-        <div class="panel-body" id="slots-container"></div>
+  <!-- CENTER -->
+  <div class="panel cpanel">
+    <div class="ph">
+      <div class="pt"><i class="fa-solid fa-wave-square"></i>Live Event Feed</div>
+      <button class="ibtn" onclick="load()" title="Refresh"><i class="fa-solid fa-rotate-right"></i></button>
     </div>
+    <div class="fbar">
+      <button class="fbtn act" onclick="setF('ALL',this)">ALL</button>
+      <button class="fbtn" onclick="setF('ENTRY',this)">ENTRY</button>
+      <button class="fbtn" onclick="setF('EXIT',this)">EXIT</button>
+      <div class="fsp"></div>
+      <input class="sbox" id="sb" placeholder="SEARCH PLATE…" oninput="rTbl()">
+    </div>
+    <div class="cscroll">
+      <table class="etbl">
+        <thead>
+          <tr>
+            <th>Plate</th><th>Event</th><th>Confidence</th>
+            <th>Device</th><th>Time</th><th>Snap</th>
+          </tr>
+        </thead>
+        <tbody id="tb"><tr><td colspan="6"><div class="empt">INITIALISING…</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
 
-    <div class="panel" style="border:none">
-        <div class="panel-head">Audit Log Feed</div>
-        <div id="log-feed" class="panel-body" style="padding:0"></div>
+  <!-- RIGHT -->
+  <div class="panel">
+    <div class="ph">
+      <div class="pt"><i class="fa-solid fa-list-ul"></i>Audit Log</div>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--muted2)" id="lc">0 events</span>
     </div>
+    <div class="pb" id="lf"></div>
+  </div>
+
 </div>
 
+<!-- MODAL -->
+<div class="mdbg" id="sm" onclick="if(event.target.id==='sm')document.getElementById('sm').classList.remove('open')">
+  <div class="mdbox">
+    <div class="mdh">
+      <span class="mdt" id="mt">SNAPSHOT</span>
+      <button class="mdc" onclick="document.getElementById('sm').classList.remove('open')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <img class="mdi" id="mi" src="" alt="">
+    <div class="mdm" id="mm"></div>
+  </div>
+</div>
+
+<div class="twrap" id="tw"></div>
+
 <script>
-    const SB_URL = "https://vlxyoxuejydfpclhxczr.supabase.co";
-    const SB_KEY = "sb_publishable_X8F1t9Qs_bznY7OrJtp0Ew_wQDe_7qV";
-    const supabase = window.supabase.createClient(SB_URL, SB_KEY);
+const SB_URL  = "https://vlxyoxuejydfpclhxczr.supabase.co";
+const SB_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZseHlveHVlanlkZnBjbGh4Y3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzMjEsImV4cCI6MjA4NjQwNTMyMX0.0EDvZze2wMM_w1gqGxbgylfH9V3krfk87I7u3bUuCro";
+const TABLE   = "ParkingEvents";
+const {createClient}=supabase;
+const sb=createClient(SB_URL,SB_KEY);
 
-    async function updateUI() {
-        const { data: slots } = await supabase.from('Slots').select('*').order('name', { ascending: true });
-        if (!slots) return;
+let evs=[],filter='ALL',total=0;
+const today=()=>new Date().toDateString();
 
-        const container = document.getElementById("slots-container");
-        const logFeed = document.getElementById("log-feed");
-        const occ = slots.filter(s => s.current_occupancy > 0).length;
-        document.getElementById("cap").innerText = `${slots.length - occ} / ${slots.length} FREE`;
+function ffull(iso){return new Date(iso).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}
+function frel(iso){const d=Math.floor((Date.now()-new Date(iso))/1000);if(d<60)return d+'s ago';if(d<3600)return Math.floor(d/60)+'m ago';return ffull(iso)}
+function cc(c){const p=Math.round((c||0)*100);return p>=80?'#64ffda':p>=50?'#f59e0b':'#ef4444'}
 
-        container.innerHTML = `<div class="slots-grid">${slots.map(s => `
-            <div class="slot ${s.current_occupancy ? 'occ' : 'free'}">
-                <div style="font-size:9px; opacity:0.5">${s.name}</div>
-                <div class="plate">${s.metadata?.last_plate || '---'}</div>
-                <div style="font-size:10px">${s.current_occupancy ? 'OCCUPIED' : 'VACANT'}</div>
-            </div>
-        `).join('')}</div>`;
+function stats(){
+  let en=0,ex=0;
+  evs.forEach(e=>{if(new Date(e.created_at).toDateString()===today()){e.event_type==='ENTRY'?en++:ex++}});
+  document.getElementById('h-en').textContent=en;
+  document.getElementById('h-ex').textContent=ex;
+  document.getElementById('h-tot').textContent=total;
+  document.getElementById('occ-n').textContent=Math.max(0,en-ex);
+  const t=en+ex||1;
+  document.getElementById('eb').style.width=Math.round(en/t*100)+'%';
+  document.getElementById('xb').style.width=Math.round(ex/t*100)+'%';
+  document.getElementById('er').textContent=en+' today';
+  document.getElementById('xr').textContent=ex+' today';
+  document.getElementById('lc').textContent=evs.length+' events';
+}
 
-        const logs = slots.filter(s => s.metadata?.last_plate).sort((a,b) => b.updated_at.localeCompare(a.updated_at));
-        logFeed.innerHTML = logs.map(l => `
-            <div class="log-item">
-                <span class="badge">${l.metadata.direction}</span>
-                <strong>${l.metadata.last_plate}</strong><br>
-                <span style="opacity:0.4; font-size:10px">${new Date(l.updated_at).toLocaleTimeString()}</span>
-            </div>
-        `).join('');
-    }
+function rTbl(){
+  const q=document.getElementById('sb').value.toUpperCase().trim();
+  let d=evs;
+  if(filter!=='ALL')d=d.filter(e=>e.event_type===filter);
+  if(q)d=d.filter(e=>e.plate_number.includes(q));
+  const tb=document.getElementById('tb');
+  if(!d.length){tb.innerHTML=`<tr><td colspan="6"><div class="empt">${evs.length?'NO MATCHING EVENTS':'WAITING FOR FIRST DETECTION…'}</div></td></tr>`;return}
+  tb.innerHTML=d.map(ev=>{
+    const p=Math.round((ev.confidence||0)*100);
+    const sn=ev.snapshot_url?`<a class="sbtn" href="#" onclick="openS('${ev.id}');return false">VIEW</a>`:'<span style="color:var(--muted)">—</span>';
+    return`<tr><td><span class="pv">${ev.plate_number}</span></td><td><span class="ebadge ${ev.event_type}">${ev.event_type}</span></td><td><div class="cw"><div class="cb"><div class="cf" style="width:${p}%;background:${cc(ev.confidence)}"></div></div><span class="cp">${p}%</span></div></td><td style="color:var(--muted2)">${ev.device_id||'—'}</td><td class="tv">${ffull(ev.created_at)}</td><td>${sn}</td></tr>`;
+  }).join('');
+}
 
-    // Initialize Realtime Listener
-    supabase.channel('custom-all-channel')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'Slots' }, (payload) => {
-        console.log('Change received!', payload);
-        updateUI();
-    }).subscribe();
+function rLog(){
+  const lf=document.getElementById('lf');
+  if(!evs.length){lf.innerHTML='<div class="empt" style="padding:40px 16px;font-size:10px;letter-spacing:.12em;text-align:center;color:var(--muted)">NO EVENTS YET</div>';return}
+  lf.innerHTML=evs.slice(0,60).map(ev=>`<div class="li ${ev.event_type}" onclick="openS('${ev.id}')"><div class="lt"><span class="lp">${ev.plate_number}</span><span class="lb ${ev.event_type}">${ev.event_type}</span></div><div class="lb2"><span class="ltime">${frel(ev.created_at)}</span><span class="ldev">${ev.device_id||'—'}</span></div></div>`).join('');
+}
 
-    updateUI();
+function setF(f,btn){filter=f;document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('act'));btn.classList.add('act');rTbl()}
+
+async function load(){
+  const {data,error}=await sb.from(TABLE).select('*').order('created_at',{ascending:false}).limit(200);
+  if(error){console.error(error);return}
+  evs=data||[];
+  const {count}=await sb.from(TABLE).select('*',{count:'exact',head:true});
+  total=count||evs.length;
+  stats();rTbl();rLog();setLive(true);
+}
+
+function setLive(ok){
+  const b=document.getElementById('cb');
+  b.className='cbadge '+(ok?'live':'err');
+  document.getElementById('cl').textContent=ok?'REALTIME LIVE':'DISCONNECTED';
+}
+
+function sub(){
+  sb.channel('nx-rt').on('postgres_changes',{event:'INSERT',schema:'public',table:TABLE},p=>{
+    const ev=p.new;
+    evs.unshift(ev);if(evs.length>200)evs.pop();
+    total++;stats();rTbl();rLog();doToast(ev);
+    const fl=document.querySelector('#lf .li');
+    if(fl){fl.classList.remove('fl');void fl.offsetWidth;fl.classList.add('fl')}
+  }).subscribe(s=>setLive(s==='SUBSCRIBED'));
+}
+
+function doToast(ev){
+  const tw=document.getElementById('tw');
+  const t=document.createElement('div');
+  t.className='toast '+ev.event_type;
+  t.innerHTML=`<div class="tp">${ev.plate_number}</div><div class="ts">${ev.event_type} · ${ev.device_id||'GATE'} · ${ffull(ev.created_at)}</div>`;
+  tw.prepend(t);
+  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400)},3500);
+}
+
+function openS(id){
+  const ev=evs.find(e=>e.id===id);if(!ev||!ev.snapshot_url)return;
+  document.getElementById('mt').textContent=ev.plate_number+' — '+ev.event_type;
+  document.getElementById('mi').src=ev.snapshot_url;
+  document.getElementById('mm').innerHTML=`<div>Plate: <span>${ev.plate_number}</span></div><div>Event: <span>${ev.event_type}</span></div><div>Device: <span>${ev.device_id||'—'}</span></div><div>Time: <span>${ffull(ev.created_at)}</span></div><div>Confidence: <span>${Math.round((ev.confidence||0)*100)}%</span></div>`;
+  document.getElementById('sm').classList.add('open');
+}
+
+function gcmd(gate){
+  doToast({plate_number:'GATE CMD SENT',event_type:'ENTRY',device_id:gate,created_at:new Date().toISOString(),confidence:1});
+}
+
+setInterval(()=>{
+  document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-IN',{hour12:false});
+  rLog();
+},1000);
+
+(async()=>{await load();sub()})();
 </script>
 </body>
 </html>
