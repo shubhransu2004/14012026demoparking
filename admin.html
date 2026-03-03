@@ -5,114 +5,54 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FeeParking | Admin Control</title>
 
-<!-- Tailwind CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
-
-<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-<style>
-body { font-family: 'Inter', sans-serif; }
-.glass {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(14px);
-}
-.fade-in { animation: fadeIn 0.4s ease-in-out; }
-@keyframes fadeIn { from {opacity:0; transform:translateY(10px)} to {opacity:1; transform:translateY(0)} }
-</style>
 </head>
 
 <body class="bg-slate-950 text-white min-h-screen">
 
-<!-- HEADER -->
-<header class="flex justify-between items-center px-6 py-4 border-b border-slate-800">
-  <div class="flex items-center gap-3">
-    <div class="w-10 h-10 bg-emerald-400 rounded-xl flex items-center justify-center text-black font-bold">
-      FP
-    </div>
-    <div>
-      <div class="font-semibold text-lg tracking-wide">FeeParking</div>
-      <div class="text-xs text-slate-400">Admin Command Center</div>
-    </div>
-  </div>
+<div id="loading" class="flex items-center justify-center min-h-screen">
+  <div class="text-slate-400">Authenticating...</div>
+</div>
 
-  <div class="flex items-center gap-6 text-sm">
-    <div>
-      <span class="text-slate-400">Entries:</span>
-      <span id="stat-entry" class="font-semibold text-emerald-400 ml-1">0</span>
-    </div>
-    <div>
-      <span class="text-slate-400">Exits:</span>
-      <span id="stat-exit" class="font-semibold text-red-400 ml-1">0</span>
-    </div>
-    <button onclick="logout()" class="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/30 transition">
-      Logout
-    </button>
-  </div>
+<div id="dashboard" class="hidden">
+
+<header class="flex justify-between items-center px-6 py-4 border-b border-slate-800">
+  <h1 class="text-xl font-semibold">FeeParking Admin Dashboard</h1>
+  <button onclick="logout()" class="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/30 transition">
+    Logout
+  </button>
 </header>
 
-<!-- MAIN GRID -->
 <div class="grid grid-cols-12 gap-6 p-6">
 
-  <!-- LEFT PANEL -->
   <div class="col-span-3 space-y-6">
-
-    <div class="glass p-6 rounded-2xl border border-slate-800">
-      <div class="text-sm text-slate-400 mb-4">Live Occupancy</div>
-      <div id="occupancy" class="text-4xl font-bold text-emerald-400">0</div>
-      <div class="text-xs text-slate-500 mt-1">Vehicles inside</div>
+    <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+      <div class="text-sm text-slate-400">Live Occupancy</div>
+      <div id="occupancy" class="text-4xl font-bold text-emerald-400 mt-2">0</div>
     </div>
-
-    <div class="glass p-6 rounded-2xl border border-slate-800">
-      <div class="text-sm text-slate-400 mb-4">System Health</div>
-      <div class="space-y-2 text-sm">
-        <div class="flex justify-between">
-          <span>Pi Node</span>
-          <span class="text-emerald-400">ONLINE</span>
-        </div>
-        <div class="flex justify-between">
-          <span>ESP Nodes</span>
-          <span class="text-yellow-400">PENDING</span>
-        </div>
-      </div>
-    </div>
-
   </div>
 
-  <!-- CENTER -->
-  <div class="col-span-6 glass p-6 rounded-2xl border border-slate-800">
-
-    <div class="flex justify-between items-center mb-6">
-      <div class="text-lg font-semibold">Live Parking Events</div>
+  <div class="col-span-9 bg-slate-900 p-6 rounded-2xl border border-slate-800">
+    <div class="flex justify-between mb-4">
+      <h2 class="text-lg font-semibold">Live Parking Events</h2>
       <input id="search" placeholder="Search plate..."
-        class="bg-slate-900 border border-slate-700 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+        class="bg-slate-800 border border-slate-700 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
     </div>
-
-    <div class="overflow-y-auto max-h-[600px] space-y-3" id="event-list">
-      <div class="text-slate-500 text-sm">Loading events...</div>
-    </div>
-
+    <div id="event-list" class="space-y-3 max-h-[600px] overflow-y-auto"></div>
   </div>
 
-  <!-- RIGHT PANEL -->
-  <div class="col-span-3 glass p-6 rounded-2xl border border-slate-800">
-
-    <div class="text-sm text-slate-400 mb-4">Realtime Status</div>
-    <div id="connection-status" class="text-emerald-400 font-semibold">Connecting...</div>
-
-    <div class="mt-6 text-sm text-slate-400">Total Records</div>
-    <div id="total-count" class="text-2xl font-bold mt-1">0</div>
-
-  </div>
+</div>
 
 </div>
 
 <script>
 const SB_URL  = "https://vlxyoxuejydfpclhxczr.supabase.co";
 const SB_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZseHlveHVlanlkZnBjbGh4Y3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzMjEsImV4cCI6MjA4NjQwNTMyMX0.0EDvZze2wMM_w1gqGxbgylfH9V3krfk87I7u3bUuCro";
+
 const { createClient } = supabase;
+
 const sb = createClient(SB_URL, SB_KEY, {
   auth: {
     persistSession: true,
@@ -121,38 +61,38 @@ const sb = createClient(SB_URL, SB_KEY, {
   }
 });
 
-async function requireAdmin() {
-  const { data: { user } } = await sb.auth.getUser();
-  console.log("User:", user);
+let events = [];
 
-  if (!user) {
-    console.log("No session found");
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+
+  if (!session) {
     window.location.href = "login.html";
     return;
   }
 
-  const { data } = await sb
+  const user = session.user;
+
+  const { data, error } = await sb
     .from("Profiles")
     .select("role")
     .eq("auth_user_id", user.id)
     .single();
 
-  console.log("Profile:", data);
-
-  if (!data || data.role !== "Admin") {
-    console.log("Not admin");
+  if (error || !data || data.role !== "Admin") {
+    await sb.auth.signOut();
     window.location.href = "login.html";
+    return;
   }
+
+  document.getElementById("loading").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+
+  loadEvents();
+  subscribeRealtime();
 }
 
-async function logout(){
-  await sb.auth.signOut();
-  window.location.href = "login.html";
-}
-
-let events = [];
-
-async function loadEvents(){
+async function loadEvents() {
   const { data } = await sb
     .from("ParkingEvents")
     .select("*")
@@ -160,25 +100,25 @@ async function loadEvents(){
     .limit(200);
 
   events = data || [];
-  renderEvents();
+  render();
 }
 
-function renderEvents(){
+function render() {
   const container = document.getElementById("event-list");
   container.innerHTML = "";
 
-  let entry = 0, exit = 0;
+  let entry=0, exit=0;
 
   events.forEach(e=>{
     if(e.event_type==="ENTRY") entry++;
     if(e.event_type==="EXIT") exit++;
 
     const div = document.createElement("div");
-    div.className="bg-slate-900 p-4 rounded-xl border border-slate-800 fade-in";
+    div.className="bg-slate-800 p-4 rounded-xl border border-slate-700";
     div.innerHTML=`
       <div class="flex justify-between">
-        <div class="font-semibold text-lg">${e.plate_number}</div>
-        <div class="${e.event_type==='ENTRY'?'text-emerald-400':'text-red-400'} text-sm">
+        <div class="font-semibold">${e.plate_number}</div>
+        <div class="${e.event_type==='ENTRY'?'text-emerald-400':'text-red-400'}">
           ${e.event_type}
         </div>
       </div>
@@ -189,10 +129,7 @@ function renderEvents(){
     container.appendChild(div);
   });
 
-  document.getElementById("stat-entry").textContent = entry;
-  document.getElementById("stat-exit").textContent = exit;
   document.getElementById("occupancy").textContent = entry - exit;
-  document.getElementById("total-count").textContent = events.length;
 }
 
 function subscribeRealtime(){
@@ -201,20 +138,18 @@ function subscribeRealtime(){
       { event:"INSERT", schema:"public", table:"ParkingEvents" },
       payload=>{
         events.unshift(payload.new);
-        renderEvents();
+        render();
       }
     )
-    .subscribe(status=>{
-      document.getElementById("connection-status").textContent =
-        status==="SUBSCRIBED" ? "LIVE" : "DISCONNECTED";
-    });
+    .subscribe();
 }
 
-(async()=>{
-  await requireAdmin();
-  await loadEvents();
-  subscribeRealtime();
-})();
+async function logout(){
+  await sb.auth.signOut();
+  window.location.href = "login.html";
+}
+
+init();
 </script>
 
 </body>
