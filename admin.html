@@ -113,11 +113,23 @@ body { font-family: 'Inter', sans-serif; }
 const SB_URL  = "https://vlxyoxuejydfpclhxczr.supabase.co";
 const SB_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZseHlveHVlanlkZnBjbGh4Y3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzMjEsImV4cCI6MjA4NjQwNTMyMX0.0EDvZze2wMM_w1gqGxbgylfH9V3krfk87I7u3bUuCro";
 const { createClient } = supabase;
-const sb = createClient(SB_URL, SB_KEY);
+const sb = createClient(SB_URL, SB_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
 
 async function requireAdmin() {
   const { data: { user } } = await sb.auth.getUser();
-  if (!user) return window.location.href = "login.html";
+  console.log("User:", user);
+
+  if (!user) {
+    console.log("No session found");
+    window.location.href = "login.html";
+    return;
+  }
 
   const { data } = await sb
     .from("Profiles")
@@ -125,8 +137,12 @@ async function requireAdmin() {
     .eq("auth_user_id", user.id)
     .single();
 
-  if (!data || data.role !== "Admin")
+  console.log("Profile:", data);
+
+  if (!data || data.role !== "Admin") {
+    console.log("Not admin");
     window.location.href = "login.html";
+  }
 }
 
 async function logout(){
