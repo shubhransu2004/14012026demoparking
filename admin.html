@@ -76,11 +76,22 @@ sb.auth.onAuthStateChange(async (event, session) => {
 });
 
 async function loadEvents() {
-  const { data } = await sb
-    .from("ParkingEvents")
-    .select("*")
-    .order("created_at", { ascending:false })
-    .limit(100);
+  const { data, error } = await sb
+  .from("Profiles")
+  .select("role")
+  .eq("auth_user_id", user.id);
+
+if (error || !data || data.length === 0) {
+  await sb.auth.signOut();
+  window.location.href = "login.html";
+  return;
+}
+
+if (data[0].role !== "Admin") {
+  await sb.auth.signOut();
+  window.location.href = "login.html";
+  return;
+}
 
   const container = document.getElementById("event-list");
   container.innerHTML = "";
