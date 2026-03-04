@@ -1,56 +1,110 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Login</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta charset="UTF-8">
+<title>FeeParking Login</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body { font-family: Arial; background:#f4f4f4; padding:40px; }
+.container { background:white; padding:30px; max-width:400px; margin:auto; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1);}
+input, select { width:100%; padding:8px; margin-top:10px; }
+button { padding:10px; margin-top:15px; width:100%; }
+</style>
 </head>
 <body>
 
-<h1>Admin Login</h1>
+<div class="container">
+<h2>FeeParking Login</h2>
 
-<input id="email" type="email" placeholder="Email"><br><br>
-<input id="password" type="password" placeholder="Password"><br><br>
-<button onclick="login()">Login</button>
+<select id="role">
+  <option value="Customer" selected>Customer</option>
+  <option value="Admin">Admin</option>
+  <option value="Operator">Operator</option>
+</select>
+
+<input id="email" placeholder="Email (no tempmail)" />
+<input id="vehicle" placeholder="Vehicle Registration Number (Customer only)" />
+<input id="password" type="password" placeholder="Password (Admin/Operator only)" />
+<button onclick="handleLogin()">Continue</button>
+
+<div id="otpSection" style="display:none;">
+  <input id="otp" placeholder="Enter OTP" />
+  <button onclick="verifyOTP()">Verify OTP</button>
+</div>
+
+</div>
 
 <script>
 const SB_URL  = "https://vlxyoxuejydfpclhxczr.supabase.co";
 const SB_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZseHlveHVlanlkZnBjbGh4Y3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzMjEsImV4cCI6MjA4NjQwNTMyMX0.0EDvZze2wMM_w1gqGxbgylfH9V3krfk87I7u3bUuCro";
 
 const { createClient } = supabase;
+const sb = createClient(SB_URL, SB_KEY);
 
-const sb = createClient(SB_URL, SB_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storageKey: "feeparking-auth"
-  }
-});
+let tempEmail = "";
 
-async function login() {
-  const email = document.getElementById("email").value;
+async function handleLogin() {
+  const role = document.getElementById("role").value;
+  const email = document.getElementById("email").value.trim();
+  const vehicle = document.getElementById("vehicle").value.trim();
   const password = document.getElementById("password").value;
 
-  const { error } = await sb.auth.signInWithPassword({
-    email,
-    password
+  if(role === "Customer") {
+
+    if(!email.includes("@") || email.includes("tempmail")) {
+      alert("Invalid email.");
+      return;
+    }
+
+    if(vehicle === "") {
+      alert("Vehicle number required.");
+      return;
+    }
+
+    tempEmail = email;
+
+    const { error } = await sb.auth.signInWithOtp({
+      email: email,
+      options: { shouldCreateUser: true }
+    });
+
+    if(error){ alert(error.message); return; }
+
+    document.getElementById("otpSection").style.display="block";
+
+  } else {
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error){ alert(error.message); return; }
+
+    if(role === "Admin") window.location.href="admin.html";
+    if(role === "Operator") window.location.href="operator.html";
+  }
+}
+
+async function verifyOTP() {
+  const otp = document.getElementById("otp").value;
+
+  const { data, error } = await sb.auth.verifyOtp({
+    email: tempEmail,
+    token: otp,
+    type: "email"
   });
 
-  if (error) {
-    alert(error.message);
-    return;
-  }
+  if(error){ alert(error.message); return; }
 
-  // Ensure session exists before redirect
-  const { data: { session } } = await sb.auth.getSession();
+  const vehicle = document.getElementById("vehicle").value.trim();
 
-  if (!session) {
-    alert("Session creation failed.");
-    return;
-  }
+  await sb.from("Profiles").insert([{
+    id: crypto.randomUUID(),
+    auth_user_id: data.user.id,
+    email: tempEmail,
+    full_name: tempEmail.split("@")[0],
+    role: "Customer",
+    metadata: { vehicle }
+  }]);
 
-  window.location.href = "admin.html";
+  alert("Login successful");
+  window.location.href="index.html";
 }
 </script>
 
