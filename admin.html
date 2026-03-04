@@ -1,92 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta charset="UTF-8">
+<title>Admin Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{font-family:Arial;padding:30px;}
+</style>
 </head>
 <body>
 
-<div id="loading">Authenticating...</div>
-
-<div id="dashboard" style="display:none;">
-  <h1>Admin Dashboard</h1>
-  <button onclick="logout()">Logout</button>
-  <div id="events"></div>
-</div>
+<h1>Admin Dashboard</h1>
+<button onclick="logout()">Logout</button>
+<div id="events"></div>
 
 <script>
-const SB_URL  = "https://vlxyoxuejydfpclhxczr.supabase.co";
-const SB_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZseHlveHVlanlkZnBjbGh4Y3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzMjEsImV4cCI6MjA4NjQwNTMyMX0.0EDvZze2wMM_w1gqGxbgylfH9V3krfk87I7u3bUuCro";
-
+const SB_URL="https://vlxyoxuejydfpclhxczr.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZseHlveHVlanlkZnBjbGh4Y3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzMjEsImV4cCI6MjA4NjQwNTMyMX0.0EDvZze2wMM_w1gqGxbgylfH9V3krfk87I7u3bUuCro";
 const { createClient } = supabase;
+const sb = createClient(SB_URL,SB_KEY);
 
-const sb = createClient(SB_URL, SB_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storageKey: "feeparking-auth"
-  }
-});
-
-async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-
-  console.log("SESSION:", session);
-
-  if (!session) {
-    window.location.href = "login.html";
-    return;
-  }
-
-  document.getElementById("loading").style.display = "none";
-  document.getElementById("dashboard").style.display = "block";
-
+async function init(){
+  const { data:{session} } = await sb.auth.getSession();
+  if(!session){ window.location.href="login.html"; return; }
   loadEvents();
 }
 
-async function loadEvents() {
-  const { data, error } = await sb
-    .from("ParkingEvents")
+async function loadEvents(){
+  const { data } = await sb.from("ParkingEvents")
     .select("*")
-    .order("created_at", { ascending:false })
-    .limit(50);
+    .order("created_at",{ascending:false})
+    .limit(100);
 
-  console.log("EVENT DATA:", data);
-  console.log("EVENT ERROR:", error);
-
-  if (error) {
-    document.getElementById("events").innerHTML =
-      "<p style='color:red;'>Error loading events</p>";
-    return;
-  }
-
-  const container = document.getElementById("events");
-  container.innerHTML = "";
-
-  if (!data || data.length === 0) {
-    container.innerHTML = "<p>No events found.</p>";
-    return;
-  }
-
-  data.forEach(e => {
-    const div = document.createElement("div");
-    div.innerHTML = `
-      <b>${e.plate_number}</b> - ${e.event_type}
-      <small>${new Date(e.created_at).toLocaleString()}</small>
-    `;
-    container.appendChild(div);
+  const div=document.getElementById("events");
+  div.innerHTML="";
+  data.forEach(e=>{
+    div.innerHTML+=`<p><b>${e.plate_number}</b> - ${e.event_type} - ${new Date(e.created_at).toLocaleString()}</p>`;
   });
 }
 
-async function logout() {
+async function logout(){
   await sb.auth.signOut();
-  window.location.href = "login.html";
+  window.location.href="login.html";
 }
 
 init();
 </script>
-
 </body>
 </html>
