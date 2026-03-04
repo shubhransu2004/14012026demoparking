@@ -1,32 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FeeParking | Admin</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+<body>
 
-<body class="bg-slate-950 text-white min-h-screen">
+<div id="loading">Authenticating...</div>
 
-<div id="loading" class="flex items-center justify-center min-h-screen">
-  <div class="text-slate-400">Authenticating...</div><div id="dashboard" class="hidden">
-</div>
-
-<div id="dashboard" class="hidden">
-  <header class="flex justify-between items-center px-6 py-4 border-b border-slate-800">
-    <h1 class="text-xl font-semibold">Admin Dashboard</h1>
-    <button onclick="logout()" class="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/30 transition">
-      Logout
-    </button>
-  </header>
-
-  <div class="p-6">
-    <h2 class="text-lg font-semibold mb-4">Parking Events</h2>
-    <div id="event-list" class="space-y-3 max-h-[600px] overflow-y-auto"></div>
-  </div>
+<div id="dashboard" style="display:none;">
+  <h1>Admin Dashboard</h1>
+  <button onclick="logout()">Logout</button>
+  <div id="events"></div>
 </div>
 
 <script>
@@ -34,82 +20,50 @@ const SB_URL  = "https://vlxyoxuejydfpclhxczr.supabase.co";
 const SB_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6ImFub24iLCJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZseHlveHVlanlkZnBjbGh4Y3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzMjEsImV4cCI6MjA4NjQwNTMyMX0.0EDvZze2wMM_w1gqGxbgylfH9V3krfk87I7u3bUuCro";
 
 const { createClient } = supabase;
+
 const sb = createClient(SB_URL, SB_KEY, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storageKey: "feeparking-auth"
   }
 });
 
-let events = [];
-
 async function init() {
   const { data: { session } } = await sb.auth.getSession();
+
+  console.log("SESSION:", session);
 
   if (!session) {
     window.location.href = "login.html";
     return;
   }
 
-  const role = session.user.user_metadata?.role;
-
-  if (role !== "Admin") {
-    await sb.auth.signOut();
-    window.location.href = "login.html";
-    return;
-  }
-
-  document.getElementById("loading").classList.add("hidden");
-  document.getElementById("dashboard").classList.remove("hidden");
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
 
   loadEvents();
-  subscribeRealtime();
 }
 
 async function loadEvents() {
   const { data } = await sb
     .from("ParkingEvents")
     .select("*")
-    .order("created_at", { ascending: false })
-    .limit(200);
+    .order("created_at", { ascending:false })
+    .limit(50);
 
-  events = data || [];
-  render();
-}
-
-function render() {
-  const container = document.getElementById("event-list");
+  const container = document.getElementById("events");
   container.innerHTML = "";
 
-  events.forEach(e => {
+  (data || []).forEach(e => {
     const div = document.createElement("div");
-    div.className = "bg-slate-800 p-4 rounded-xl border border-slate-700";
     div.innerHTML = `
-      <div class="flex justify-between">
-        <div class="font-semibold">${e.plate_number}</div>
-        <div class="${e.event_type === 'ENTRY' ? 'text-emerald-400' : 'text-red-400'}">
-          ${e.event_type}
-        </div>
-      </div>
-      <div class="text-xs text-slate-400 mt-1">
-        ${new Date(e.created_at).toLocaleString()}
-      </div>
+      <b>${e.plate_number}</b> - ${e.event_type} 
+      <small>${new Date(e.created_at).toLocaleString()}</small>
     `;
     container.appendChild(div);
   });
-}
-
-function subscribeRealtime() {
-  sb.channel("admin-live")
-    .on("postgres_changes",
-      { event: "INSERT", schema: "public", table: "ParkingEvents" },
-      payload => {
-        events.unshift(payload.new);
-        render();
-      }
-    )
-    .subscribe();
 }
 
 async function logout() {
@@ -119,5 +73,6 @@ async function logout() {
 
 init();
 </script>
+
 </body>
 </html>
