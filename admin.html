@@ -47,19 +47,33 @@ async function init() {
 }
 
 async function loadEvents() {
-  const { data } = await sb
+  const { data, error } = await sb
     .from("ParkingEvents")
     .select("*")
     .order("created_at", { ascending:false })
     .limit(50);
 
+  console.log("EVENT DATA:", data);
+  console.log("EVENT ERROR:", error);
+
+  if (error) {
+    document.getElementById("events").innerHTML =
+      "<p style='color:red;'>Error loading events</p>";
+    return;
+  }
+
   const container = document.getElementById("events");
   container.innerHTML = "";
 
-  (data || []).forEach(e => {
+  if (!data || data.length === 0) {
+    container.innerHTML = "<p>No events found.</p>";
+    return;
+  }
+
+  data.forEach(e => {
     const div = document.createElement("div");
     div.innerHTML = `
-      <b>${e.plate_number}</b> - ${e.event_type} 
+      <b>${e.plate_number}</b> - ${e.event_type}
       <small>${new Date(e.created_at).toLocaleString()}</small>
     `;
     container.appendChild(div);
