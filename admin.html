@@ -12,7 +12,7 @@
 <body class="bg-slate-950 text-white min-h-screen">
 
 <div id="loading" class="flex items-center justify-center min-h-screen">
-  <div class="text-slate-400">Authenticating...</div>
+  <div class="text-slate-400">Authenticating...</div><div id="dashboard" class="hidden">
 </div>
 
 <div id="dashboard" class="hidden">
@@ -34,7 +34,6 @@ const SB_URL  = "https://vlxyoxuejydfpclhxczr.supabase.co";
 const SB_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6ImFub24iLCJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZseHlveHVlanlkZnBjbGh4Y3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzMjEsImV4cCI6MjA4NjQwNTMyMX0.0EDvZze2wMM_w1gqGxbgylfH9V3krfk87I7u3bUuCro";
 
 const { createClient } = supabase;
-
 const sb = createClient(SB_URL, SB_KEY, {
   auth: {
     persistSession: true,
@@ -45,27 +44,17 @@ const sb = createClient(SB_URL, SB_KEY, {
 
 let events = [];
 
-async function checkAuth(session) {
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
 
   if (!session) {
     window.location.href = "login.html";
     return;
   }
 
-  const user = session.user;
+  const role = session.user.user_metadata?.role;
 
-  const { data, error } = await sb
-    .from("Profiles")
-    .select("role")
-    .eq("auth_user_id", user.id);
-
-  if (error || !data || data.length === 0) {
-    await sb.auth.signOut();
-    window.location.href = "login.html";
-    return;
-  }
-
-  if (data[0].role !== "Admin") {
+  if (role !== "Admin") {
     await sb.auth.signOut();
     window.location.href = "login.html";
     return;
@@ -78,20 +67,11 @@ async function checkAuth(session) {
   subscribeRealtime();
 }
 
-async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-  await checkAuth(session);
-
-  sb.auth.onAuthStateChange(async (event, session) => {
-    await checkAuth(session);
-  });
-}
-
 async function loadEvents() {
   const { data } = await sb
     .from("ParkingEvents")
     .select("*")
-    .order("created_at", { ascending:false })
+    .order("created_at", { ascending: false })
     .limit(200);
 
   events = data || [];
@@ -102,13 +82,13 @@ function render() {
   const container = document.getElementById("event-list");
   container.innerHTML = "";
 
-  events.forEach(e=>{
+  events.forEach(e => {
     const div = document.createElement("div");
-    div.className="bg-slate-800 p-4 rounded-xl border border-slate-700";
-    div.innerHTML=`
+    div.className = "bg-slate-800 p-4 rounded-xl border border-slate-700";
+    div.innerHTML = `
       <div class="flex justify-between">
         <div class="font-semibold">${e.plate_number}</div>
-        <div class="${e.event_type==='ENTRY'?'text-emerald-400':'text-red-400'}">
+        <div class="${e.event_type === 'ENTRY' ? 'text-emerald-400' : 'text-red-400'}">
           ${e.event_type}
         </div>
       </div>
@@ -120,11 +100,11 @@ function render() {
   });
 }
 
-function subscribeRealtime(){
+function subscribeRealtime() {
   sb.channel("admin-live")
     .on("postgres_changes",
-      { event:"INSERT", schema:"public", table:"ParkingEvents" },
-      payload=>{
+      { event: "INSERT", schema: "public", table: "ParkingEvents" },
+      payload => {
         events.unshift(payload.new);
         render();
       }
@@ -132,13 +112,12 @@ function subscribeRealtime(){
     .subscribe();
 }
 
-async function logout(){
+async function logout() {
   await sb.auth.signOut();
   window.location.href = "login.html";
 }
 
 init();
 </script>
-
 </body>
 </html>
