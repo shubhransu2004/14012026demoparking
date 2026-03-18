@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>FeeParking Customer Panel</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+font-family:Segoe UI;
+background:#0f172a;
+color:white;
+margin:0;
+padding:30px;
+}
+
+h1{
+text-align:center;
+margin-bottom:30px;
+}
+
+h2{
+margin:25px 0 10px;
+color:#93c5fd;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:15px;
+}
+
+.slot{
+padding:20px;
+border-radius:10px;
+text-align:center;
+font-weight:600;
+transition:0.3s;
+}
+
+/* STATES */
+.free{
+background:#065f46;
+cursor:pointer;
+}
+
+.free:hover{
+transform:scale(1.05);
+}
+
+.reserved{
+background:#f59e0b;
+cursor:not-allowed;
+}
+
+.occupied{
+background:#7f1d1d;
+cursor:not-allowed;
+}
+
+.status{
+font-size:12px;
+opacity:0.8;
+margin-top:5px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Parking Slot Selection</h1>
+
+<div id="slotContainer"></div>
+
+<script>
+
+const SB_URL="https://vlxyoxuejydfpclhxczr.supabase.co"
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZseHlveHVlanlkZnBjbGh4Y3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzMjEsImV4cCI6MjA4NjQwNTMyMX0.0EDvZze2wMM_w1gqGxbgylfH9V3krfk87I7u3bUuCro"
+
+const {createClient}=supabase
+const sb=createClient(SB_URL,SB_KEY)
+
+let userId=null
+
+// ================= INIT =================
+
+async function init(){
+
+const {data:{user}}=await sb.auth.getUser()
+
+if(!user){
+alert("Please login first")
+window.location="login.html"
+return
+}
+
+userId=user.id
+
+loadSlots()
+
+}
+
+// ================= LOAD SLOTS =================
+
+async function loadSlots(){
+
+const {data,error}=await sb
+.from("Slots")
+.select("*")
+.order("floor",{ascending:true})
+.order("position",{ascending:true})
+
+if(error){
+console.error(error)
+alert(error.message)
+return
+}
+
+const container=document.getElementById("slotContainer")
+container.innerHTML=""
+
+// split floors
+const floor1=data.filter(s=>s.floor==1)
+const floor2=data.filter(s=>s.floor==2)
+
+renderFloor("Floor 1",floor1)
+renderFloor("Floor 2",floor2)
+
+}
+
+// ================= RENDER =================
+
+function renderFloor(title,slots){
+
+const container=document.getElementById("slotContainer")
+
+const heading=document.createElement("h2")
+heading.innerText=title
+container.appendChild(heading)
+
+const grid=document.createElement("div")
+grid.className="grid"
+
+slots.forEach(slot=>{
+
+const div=document.createElement("div")
+
+// STATE LOGIC
+if(slot.status === "occupied"){
+div.classList.add("slot","occupied")
+}
+else if(slot.status === "reserved"){
+div.classList.add("slot","reserved")
+}
+else{
+div.classList.add("slot","free")
+div.onclick=()=>reserve(slot.id,slot.name)
+}
+
+// UI
+div.innerHTML=`
+${slot.name}
+<div class="status">
+${slot.status==="occupied"?"OCCUPIED":
+  slot.status==="reserved"?"RESERVED":
+  "CLICK TO RESERVE"}
+</div>
+`
+
+grid.appendChild(div)
+
+})
+
+container.appendChild(grid)
+
+}
+
+// ================= RESERVE =================
+
+async function reserve(slotId, slotName){
+
+const vehicle = prompt("Enter Vehicle Number")
+if(!vehicle) return
+
+// get logged-in user
+const { data:{user} } = await sb.auth.getUser()
+
+// get profile
+const { data:profile, error:pErr } = await sb
+.from("Profiles")
+.select("id")
+.eq("auth_user_id", user.id)
+.single()
+
+if(pErr || !profile){
+alert("Profile not found")
+return
+}
+
+// time
+const start = new Date()
+const end = new Date(start.getTime() + 60*60*1000)
+
+// booking insert
+const { error } = await sb.from("Bookings").insert([{
+
+slot_id: slotId,
+customer_profile_id: profile.id,
+
+start_at: start.toISOString(),
+end_at: end.toISOString(),
+
+price_charged: 0,
+currency: "INR",
+
+status: "confirmed",
+
+plate_number: vehicle,
+
+time_range: `[${start.toISOString()},${end.toISOString()})`
+
+}])
+
+if(error){
+console.error(error)
+alert(error.message)
+return
+}
+
+// 🔥 IMPORTANT FIX → ONLY RESERVED (NOT OCCUPIED)
+await sb
+.from("Slots")
+.update({status:"reserved"})
+.eq("id",slotId)
+
+alert(`${slotName} Reserved Successfully`)
+
+// refresh UI
+loadSlots()
+
+}
+
+// ================= START =================
+
+init()
+
+</script>
+
+</body>
+</html>
