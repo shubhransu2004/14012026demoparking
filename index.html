@@ -242,17 +242,17 @@
 
             if (error || !profile) {
                 // Fallback if profile fetch fails
-                window.location.href = '/customer'; 
+                window.location.href = '/customer/'; 
                 return;
             }
 
             // Route based on database role
             if (profile.role === 'Admin') {
-                window.location.href = '/admin';
+                window.location.href = '/admin/';
             } else if (profile.role === 'Operator') {
-                window.location.href = '/operator';
+                window.location.href = '/operator/';
             } else {
-                window.location.href = '/customer';
+                window.location.href = '/customer/';
             }
         }
 
