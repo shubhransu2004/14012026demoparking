@@ -12,122 +12,91 @@
 
     <style>
         :root {
-            --bg-base: #020617;
-            --bg-card: #0f172a;
-            --border-light: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #38bdf8;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
+            --bg-base: #020617; --bg-card: #0f172a; --border-light: #1e293b;
+            --text-main: #f8fafc; --text-muted: #94a3b8;
+            --accent: #38bdf8; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-base);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-base); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
 
         /* --- NAVBAR --- */
         .navbar {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--border-light);
-            padding: 1rem 2.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border-light);
+            padding: 1rem 2.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;
         }
-
-        .brand {
-            font-size: 1.4rem; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; gap: 10px;
-        }
+        .brand { font-size: 1.4rem; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
         .brand i { color: var(--accent); }
-
         .user-controls { display: flex; align-items: center; gap: 20px; }
         .user-email { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
-        
         .logout-btn {
             background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);
-            padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;
-            display: flex; align-items: center; gap: 8px;
+            padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 8px;
         }
         .logout-btn:hover { background: var(--danger); color: white; transform: translateY(-1px); }
 
-        /* --- MAIN CONTENT --- */
-        .container { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; flex: 1; width: 100%; }
+        /* --- MAIN CONTENT & TIME SELECTOR --- */
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; flex: 1; width: 100%; }
 
-        .page-header { margin-bottom: 2.5rem; text-align: center; }
-        .page-header h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
-        .page-header p { color: var(--text-muted); font-size: 1.1rem; }
+        .search-bar {
+            background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 12px;
+            padding: 20px; margin-bottom: 3rem; display: flex; gap: 15px; align-items: flex-end;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .input-group { display: flex; flex-direction: column; flex: 1; gap: 8px; }
+        .input-group label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+        .input-group input, .input-group select {
+            padding: 12px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--bg-base);
+            color: white; font-family: 'Inter', sans-serif; font-size: 1rem; outline: none;
+        }
+        .input-group input:focus, .input-group select:focus { border-color: var(--accent); }
+        
+        .btn-search {
+            background: var(--accent); color: #000; border: none; padding: 14px 24px; border-radius: 8px;
+            font-weight: 700; cursor: pointer; transition: 0.2s; height: 45px; display: flex; align-items: center; gap: 8px;
+        }
+        .btn-search:hover { background: #0ea5e9; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); transform: translateY(-2px); }
 
         /* --- SLOT GRID --- */
         .floor-section { margin-bottom: 3.5rem; }
-        .floor-title { 
-            font-size: 1.2rem; font-weight: 700; color: var(--accent); margin-bottom: 1.5rem;
-            display: flex; align-items: center; gap: 10px;
-        }
+        .floor-title { font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; }
         .floor-title::after { content: ""; flex: 1; height: 1px; background: var(--border-light); }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1.5rem;
-        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
 
         .slot {
-            background: var(--bg-card); border: 2px solid var(--border-light);
-            border-radius: 12px; padding: 1.5rem; text-align: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative; overflow: hidden;
+            background: var(--bg-card); border: 2px solid var(--border-light); border-radius: 12px; padding: 1.5rem;
+            text-align: center; transition: all 0.3s; position: relative; overflow: hidden;
         }
-
         .slot h3 { font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--text-main); }
         .slot p.status-text { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Status Variants */
+        /* Time-based Status Variants */
         .slot.free { border-color: rgba(16, 185, 129, 0.5); cursor: pointer; }
         .slot.free p.status-text { color: var(--success); }
-        .slot.free:hover { transform: translateY(-5px); border-color: var(--success); box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05); }
+        .slot.free:hover { transform: translateY(-5px); border-color: var(--success); background: rgba(16, 185, 129, 0.05); }
         
-        .slot.reserved { border-color: rgba(245, 158, 11, 0.5); opacity: 0.8; cursor: not-allowed; }
-        .slot.reserved p.status-text { color: var(--warning); }
-        
-        .slot.occupied { border-color: rgba(239, 68, 68, 0.5); opacity: 0.6; cursor: not-allowed; }
+        .slot.occupied { border-color: rgba(239, 68, 68, 0.5); opacity: 0.5; cursor: not-allowed; }
         .slot.occupied p.status-text { color: var(--danger); }
 
-        /* --- MODAL / OVERLAY --- */
+        /* --- MODAL --- */
         .overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 200;
-            opacity: 0; transition: opacity 0.3s;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 200; opacity: 0; transition: opacity 0.3s;
         }
         .overlay.show { display: flex; opacity: 1; }
-
         .modal {
-            background: var(--bg-card); border: 1px solid var(--border-light); padding: 2.5rem;
-            border-radius: 16px; width: 100%; max-width: 400px; text-align: center;
-            transform: translateY(20px); transition: transform 0.3s; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            background: var(--bg-card); border: 1px solid var(--border-light); padding: 2.5rem; border-radius: 16px;
+            width: 100%; max-width: 450px; text-align: center; transform: translateY(20px); transition: transform 0.3s;
         }
         .overlay.show .modal { transform: translateY(0); }
-
-        .modal h2 { margin-bottom: 10px; color: var(--text-main); }
-        .modal p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; }
         
+        .booking-summary { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); padding: 15px; border-radius: 8px; margin: 20px 0; text-align: left; }
+        .booking-summary p { margin: 5px 0; font-size: 0.9rem; color: var(--text-main); }
+        .booking-summary span { color: var(--accent); font-weight: 700; font-family: 'JetBrains Mono'; }
+
         .modal input {
-            width: 100%; padding: 12px 16px; background: var(--bg-base); border: 1px solid var(--border-light);
-            border-radius: 8px; color: white; font-family: 'JetBrains Mono', monospace; font-size: 1.1rem;
-            text-align: center; outline: none; margin-bottom: 20px; text-transform: uppercase;
+            width: 100%; padding: 14px; background: var(--bg-base); border: 1px solid var(--border-light); border-radius: 8px;
+            color: white; font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; text-align: center; outline: none; margin-bottom: 20px;
         }
         .modal input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1); }
 
@@ -136,19 +105,14 @@
         .btn-cancel { background: transparent; border: 1px solid var(--border-light); color: var(--text-muted); }
         .btn-cancel:hover { background: rgba(255,255,255,0.05); color: white; }
         .btn-confirm { background: var(--success); color: #000; }
-        .btn-confirm:hover { background: #0ea5e9; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+        .btn-confirm:hover { background: #0ea5e9; }
 
-        /* Toast */
         #toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
-            background: var(--bg-card); border: 1px solid var(--accent); padding: 12px 24px;
-            border-radius: 50px; font-weight: 600; color: var(--text-main); z-index: 1000;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            display: flex; align-items: center; gap: 10px;
+            background: var(--bg-card); border: 1px solid var(--accent); padding: 12px 24px; border-radius: 50px;
+            font-weight: 600; color: var(--text-main); z-index: 1000; transition: transform 0.3s; display: flex; align-items: center; gap: 10px;
         }
         #toast.show { transform: translateX(-50%) translateY(0); }
-        #toast i { color: var(--accent); }
-
     </style>
 </head>
 <body>
@@ -162,21 +126,46 @@
     </nav>
 
     <div class="container">
-        <div class="page-header">
-            <h1>Select Your Parking Space</h1>
-            <p>Real-time availability across all facility floors.</p>
+        
+        <div class="search-bar">
+            <div class="input-group">
+                <label>Arrival Date</label>
+                <input type="date" id="reqDate">
+            </div>
+            <div class="input-group">
+                <label>Arrival Time</label>
+                <input type="time" id="reqTime">
+            </div>
+            <div class="input-group">
+                <label>Duration</label>
+                <select id="reqDuration">
+                    <option value="60">1 Hour</option>
+                    <option value="120">2 Hours</option>
+                    <option value="180">3 Hours</option>
+                    <option value="360">6 Hours</option>
+                    <option value="720">12 Hours</option>
+                </select>
+            </div>
+            <button class="btn-search" onclick="fetchSlots()"><i class="fa-solid fa-magnifying-glass"></i> Check Availability</button>
         </div>
 
         <div id="facilityLayout">
-            <div style="text-align:center; color:var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> Synchronizing with sensors...</div>
+            <div style="text-align:center; color:var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading infrastructure...</div>
         </div>
     </div>
 
     <div class="overlay" id="bookingOverlay">
         <div class="modal">
             <h2>Reserve <span id="modalSlotName" style="color:var(--accent);">Slot</span></h2>
-            <p>Enter your Vehicle Registration Number</p>
-            <input type="text" id="vehicleInput" placeholder="e.g. OD 02 AB 1234" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
+            
+            <div class="booking-summary">
+                <p>Date: <span id="sumDate"></span></p>
+                <p>Time: <span id="sumTime"></span></p>
+                <p style="font-size:0.75rem; color:var(--warning); margin-top:8px;"><i class="fa-solid fa-shield-halved"></i> Includes 30-min total grace period</p>
+            </div>
+
+            <input type="text" id="vehicleInput" placeholder="Vehicle No. (e.g. OD 02 AB 1234)" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
+            
             <div class="btn-group">
                 <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
                 <button class="btn btn-confirm" onclick="confirmReservation()">Confirm Booking</button>
@@ -184,52 +173,98 @@
         </div>
     </div>
 
-    <div id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toastMsg"></span></div>
+    <div id="toast"><i class="fa-solid fa-circle-check" style="color:var(--accent);"></i> <span id="toastMsg"></span></div>
 
     <script>
-        // --- SUPABASE SETUP ---
         const SB_URL = "https://vlxyoxuejydfpclhxczr.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZseHlveHVlanlkZnBjbGh4Y3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzMjEsImV4cCI6MjA4NjQwNTMyMX0.0EDvZze2wMM_w1gqGxbgylfH9V3krfk87I7u3bUuCro";
         const sb = supabase.createClient(SB_URL, SB_KEY);
 
         let currentUserProfileId = null;
         let selectedSlotId = null;
+        let currentRequestedRange = null; // Stores parsed start and end Dates
 
-        // --- INIT ---
+        // --- INIT & SETUP TIME ---
         async function init() {
             const { data: { session } } = await sb.auth.getSession();
             if (!session) { window.location.href = "/"; return; }
 
             document.getElementById('userEmailDisplay').innerText = session.user.email;
-
-            // FIX: Get the actual Profile ID for the database foreign key relationships
-            let { data: profile } = await sb.from("Profiles").select("id, role").eq("auth_user_id", session.user.id).single();
             
+            // Get actual Profile ID mapping (Critical for DB constraints)
+            let { data: profile } = await sb.from("Profiles").select("id, role").eq("auth_user_id", session.user.id).single();
             if (!profile) {
                 const fallback = await sb.from("Profiles").select("id, role").eq("email", session.user.email).single();
                 profile = fallback?.data;
             }
-
-            if (!profile) {
-                alert("Error: Database profile missing. Contact support.");
-                return;
-            }
-
-            // Save the REAL Profile ID for the Bookings table
+            if (!profile) { alert("Profile error. Contact admin."); return; }
+            
             currentUserProfileId = profile.id; 
 
-            fetchSlots();
-            setInterval(fetchSlots, 5000); // Live poll every 5s
-        }
-        // --- FETCH & RENDER SLOTS ---
-        async function fetchSlots() {
-            const { data: slots, error } = await sb.from("Slots").select("*").order("floor").order("position");
-            if (error) { console.error("Error fetching slots:", error); return; }
+            // Initialize Search Bar to "Now" rounded to next 15 mins
+            const now = new Date();
+            now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15);
+            
+            const dateStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+            const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            
+            document.getElementById('reqDate').value = dateStr;
+            document.getElementById('reqDate').min = dateStr; // Prevent past dates
+            document.getElementById('reqTime').value = timeStr;
 
+            fetchSlots();
+        }
+
+        // --- FETCH SLOTS BASED ON TIME ---
+        async function fetchSlots() {
+            const dateVal = document.getElementById('reqDate').value;
+            const timeVal = document.getElementById('reqTime').value;
+            const durMins = parseInt(document.getElementById('reqDuration').value);
+
+            if(!dateVal || !timeVal) return;
+
+            // 1. Calculate requested Date objects locally
+            const reqStart = new Date(`${dateVal}T${timeVal}`);
+            const reqEnd = new Date(reqStart.getTime() + (durMins * 60000));
+            currentRequestedRange = { start: reqStart, end: reqEnd };
+
+            // 2. Fetch all Slots
+            const { data: slots } = await sb.from("Slots").select("*").order("floor").order("position");
+
+            // 3. Fetch all confirmed bookings that haven't ended yet
+            const { data: bookings } = await sb.from("Bookings").select("slot_id, start_at, end_at").eq("status", "confirmed").gte("end_at", new Date().toISOString());
+
+            // 4. Calculate Availability with 30-min total buffer logic!
+            const BUFFER = 15 * 60000; // 15 mins in milliseconds
+            const reqStartBuffered = reqStart.getTime() - BUFFER;
+            const reqEndBuffered = reqEnd.getTime() + BUFFER;
+
+            slots.forEach(slot => {
+                let isFree = true;
+                
+                if (bookings) {
+                    const slotBookings = bookings.filter(b => b.slot_id === slot.id);
+                    for (let b of slotBookings) {
+                        const bStartBuffered = new Date(b.start_at).getTime() - BUFFER;
+                        const bEndBuffered = new Date(b.end_at).getTime() + BUFFER;
+                        
+                        // Check if intervals overlap: max(start1, start2) < min(end1, end2)
+                        if (Math.max(reqStartBuffered, bStartBuffered) < Math.min(reqEndBuffered, bEndBuffered)) {
+                            isFree = false;
+                            break;
+                        }
+                    }
+                }
+                slot.ui_status = isFree ? 'free' : 'occupied';
+            });
+
+            renderGrid(slots);
+        }
+
+        function renderGrid(slots) {
             const layout = document.getElementById("facilityLayout");
             layout.innerHTML = "";
 
-            // Group by floor
             const floors = {};
             slots.forEach(slot => {
                 if (!floors[slot.floor]) floors[slot.floor] = [];
@@ -239,43 +274,42 @@
             for (const [floorNum, floorSlots] of Object.entries(floors)) {
                 const section = document.createElement("div");
                 section.className = "floor-section";
+                section.innerHTML = `<div class="floor-title"><i class="fa-solid fa-layer-group"></i> Level ${floorNum}</div>`;
                 
-                const title = document.createElement("div");
-                title.className = "floor-title";
-                title.innerHTML = `<i class="fa-solid fa-layer-group"></i> Level ${floorNum}`;
-                section.appendChild(title);
-
                 const grid = document.createElement("div");
                 grid.className = "grid";
 
                 floorSlots.forEach(slot => {
                     const el = document.createElement("div");
-                    el.className = `slot ${slot.status}`;
+                    el.className = `slot ${slot.ui_status}`;
                     
-                    let icon = slot.status === 'free' ? 'fa-square-parking' : (slot.status === 'reserved' ? 'fa-clock' : 'fa-car');
-                    let statusTxt = slot.status === 'free' ? 'Available' : slot.status;
+                    let icon = slot.ui_status === 'free' ? 'fa-square-parking' : 'fa-car-lock';
+                    let txt = slot.ui_status === 'free' ? 'Available' : 'Unavailable';
 
-                    // Only attach click event if it's free
-                    if (slot.status === 'free') {
+                    if (slot.ui_status === 'free') {
                         el.onclick = () => openModal(slot.id, slot.name);
                     }
 
-                    el.innerHTML = `
-                        <h3>${slot.name}</h3>
-                        <p class="status-text"><i class="fa-solid ${icon}"></i> ${statusTxt}</p>
-                    `;
+                    el.innerHTML = `<h3>${slot.name}</h3><p class="status-text"><i class="fa-solid ${icon}"></i> ${txt}</p>`;
                     grid.appendChild(el);
                 });
-
                 section.appendChild(grid);
                 layout.appendChild(section);
             }
         }
 
-        // --- MODAL LOGIC & REGEX ---
+        // --- MODAL & DB INSERTION ---
         function openModal(slotId, slotName) {
             selectedSlotId = slotId;
             document.getElementById('modalSlotName').innerText = slotName;
+            
+            // Format display strings for summary
+            const startStr = currentRequestedRange.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const endStr = currentRequestedRange.end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            document.getElementById('sumDate').innerText = currentRequestedRange.start.toLocaleDateString();
+            document.getElementById('sumTime').innerText = `${startStr} to ${endStr}`;
+            
             document.getElementById('vehicleInput').value = "";
             document.getElementById('bookingOverlay').classList.add('show');
             document.getElementById('vehicleInput').focus();
@@ -288,49 +322,39 @@
 
         async function confirmReservation() {
             const rawInput = document.getElementById('vehicleInput').value.trim();
-            
-            // REGEX for Indian Number Plates (e.g. OD 02 AB 1234, MH12XY9999, DL 1 Z 1234)
-            // Allows optional spaces or hyphens
             const plateRegex = /^[A-Z]{2}[ -]?[0-9]{1,2}[ -]?[A-Z]{1,3}[ -]?[0-9]{4}$/i;
 
             if (!plateRegex.test(rawInput)) {
-                alert("Invalid Vehicle Number format. Please enter a valid Indian registration (e.g., OD 02 AB 1234)");
-                return;
+                alert("Invalid Vehicle Format (e.g. OD 02 AB 1234)"); return;
             }
 
-            // Normalize the plate for the database (remove spaces/hyphens)
             const normalizedPlate = rawInput.replace(/[\s-]/g, '').toUpperCase();
+            const startIso = currentRequestedRange.start.toISOString();
+            const endIso = currentRequestedRange.end.toISOString();
 
-            // 1. Update Slot Status to Reserved
-            const { error: slotErr } = await sb.from("Slots").update({ status: 'reserved' }).eq("id", selectedSlotId);
-            
-            if (slotErr) {
-                alert("Failed to secure slot. Someone else might have booked it.");
-                closeModal();
-                fetchSlots();
-                return;
-            }
+            // Constructing the PostgreSQL `tstzrange` string with 15 min buffers on both sides
+            const bufferStart = new Date(currentRequestedRange.start.getTime() - 15 * 60000).toISOString();
+            const bufferEnd = new Date(currentRequestedRange.end.getTime() + 15 * 60000).toISOString();
+            const timeRangeStr = `[${bufferStart},${bufferEnd})`;
 
-            // 2. Insert into Bookings Table (Using your exact schema)
-            const now = new Date();
-            const end = new Date(now.getTime() + 60 * 60 * 1000); // Default 1 hour booking
-
+            // Attempt Insert (GiST constraint handles race conditions natively!)
             const { error: bookErr } = await sb.from("Bookings").insert([{
                 slot_id: selectedSlotId,
                 customer_profile_id: currentUserProfileId,
-                start_at: now.toISOString(),
-                end_at: end.toISOString(),
-                price_charged: 0.00, // Base for reservation
+                start_at: startIso,
+                end_at: endIso,
+                price_charged: 0.00,
                 currency: 'INR',
                 status: 'confirmed',
-                plate_number: normalizedPlate
+                plate_number: normalizedPlate,
+                time_range: timeRangeStr
             }]);
 
             if (bookErr) {
                 console.error(bookErr);
-                alert("Slot reserved, but failed to log booking details. Please contact support.");
+                alert("Database Constraint Error: This slot was just taken by someone else for this exact time period!");
             } else {
-                showToast(`Slot booked successfully for ${normalizedPlate}`);
+                showToast(`Slot Booked: ${normalizedPlate}`);
             }
 
             closeModal();
@@ -341,16 +365,10 @@
             const toast = document.getElementById('toast');
             document.getElementById('toastMsg').innerText = msg;
             toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3500);
+            setTimeout(() => toast.classList.remove('show'), 4000);
         }
 
-        // --- AUTH ---
-        async function logout() {
-            await sb.auth.signOut();
-            window.location.href = "/";
-        }
-
-        // Boot
+        async function logout() { await sb.auth.signOut(); window.location.href = "/"; }
         window.onload = init;
     </script>
 </body>
