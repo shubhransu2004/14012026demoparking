@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Command Center | FeeParking</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --bg-base: #020617;
+            --bg-surface: #0f172a;
+            --bg-card: #1e293b;
+            --border-light: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --sidebar-width: 260px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-surface);
+            border-right: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 0;
+            z-index: 50;
+        }
+
+        .brand {
+            padding: 0 1.5rem 2rem 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-light);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .brand i { color: var(--accent); }
+
+        .nav-item {
+            padding: 1rem 1.5rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(56, 189, 248, 0.05);
+            color: var(--accent);
+            border-left-color: var(--accent);
+        }
+
+        .user-profile {
+            margin-top: auto;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-light);
+        }
+        
+        .logout-btn {
+            width: 100%; padding: 10px; background: rgba(239, 68, 68, 0.1); color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 6px; cursor: pointer;
+            font-weight: 600; transition: 0.2s;
+        }
+        .logout-btn:hover { background: var(--danger); color: white; }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .top-header {
+            padding: 1.5rem 2.5rem;
+            border-bottom: 1px solid var(--border-light);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-header h2 { font-size: 1.5rem; font-weight: 600; }
+        
+        .status-indicator {
+            display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600;
+            background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 6px 12px; border-radius: 50px;
+        }
+        .status-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 8px var(--success); animation: pulse 2s infinite; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        .content-area { padding: 2.5rem; }
+        .tab-section { display: none; animation: fadeIn 0.3s ease; }
+        .tab-section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- CARDS & GRIDS --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem; }
+        .stat-card {
+            background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-light);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; overflow: hidden;
+        }
+        .stat-card h3 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
+        .stat-card .value { font-size: 2.5rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+        .stat-card i { position: absolute; right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.05; }
+
+        /* --- TABLES --- */
+        .table-container {
+            background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 12px; overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: rgba(0,0,0,0.2); padding: 1rem 1.5rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-light); }
+        td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-light); font-size: 0.9rem; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; }
+        .badge.entry { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .badge.exit { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .badge.admin { background: rgba(56, 189, 248, 0.15); color: var(--accent); }
+        .badge.operator { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+
+        select.table-select {
+            background: var(--bg-base); color: var(--text-main); border: 1px solid var(--border-light);
+            padding: 6px 10px; border-radius: 6px; outline: none; font-family: 'Inter'; font-size: 0.85rem;
+        }
+        select.table-select:focus { border-color: var(--accent); }
+
+        /* Notification Toast */
+        #toast {
+            position: fixed; bottom: 30px; right: 30px; background: var(--bg-card); border: 1px solid var(--accent);
+            padding: 15px 25px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: none; z-index: 1000; font-weight: 600; color: var(--accent);
+            animation: slideIn 0.3s ease forwards;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-microchip"></i> FEEPARKING
+        </div>
+        
+        <div class="nav-item active" onclick="switchTab('dashboard', this)">
+            <i class="fa-solid fa-chart-line"></i> Dashboard Overview
+        </div>
+        <div class="nav-item" onclick="switchTab('users', this)">
+            <i class="fa-solid fa-users-gear"></i> User Management
+        </div>
+        <div class="nav-item" onclick="switchTab('infrastructure', this)">
+            <i class="fa-solid fa-server"></i> Hardware & Devices
+        </div>
+        <div class="nav-item" onclick="switchTab('logs', this)">
+            <i class="fa-solid fa-list-check"></i> ANPR Event Logs
+        </div>
+
+        <div class="user-profile">
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">Logged in as SUPERADMIN</p>
+            <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-power-off"></i> Terminate Session</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-header">
+            <h2 id="header-title">System Dashboard</h2>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                SYSTEM ONLINE & SECURE
+            </div>
+        </div>
+
+        <div class="content-area">
+            
+            <div id="tab-dashboard" class="tab-section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Profiles</h3>
+                        <div class="value" id="stat-users" style="color: var(--accent);">0</div>
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Devices</h3>
+                        <div class="value" id="stat-devices" style="color: var(--success);">0</div>
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total ANPR Scans</h3>
+                        <div class="value" id="stat-scans" style="color: var(--text-main);">0</div>
+                        <i class="fa-solid fa-camera"></i>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Today's Revenue</h3>
+                        <div class="value" id="stat-revenue" style="color: var(--warning);">₹0</div>
+                        <i class="fa-solid fa-indian-rupee-sign"></i>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom: 15px; color: var(--text-muted);">Real-Time Facility Layout</h3>
+                <div class="stats-grid" id="dashboard-slots">
+                    </div>
+            </div>
+
+            <div id="tab-users" class="tab-section">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center;">
+                    <p style="color: var(--text-muted);">Modify user access levels and hierarchies.</p>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>UUID</th>
+                                <th>Email Address</th>
+                                <th>Current Role</th>
+                                <th>Actions (Auto-Save)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-infrastructure" class="tab-section">
+                <p style="color: var(--text-muted); margin-bottom: 15px;">Monitor Edge AI Devices and Controllers.</p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Device ID / Name</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Last Seen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="devices-tbody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-logs" class="tab-section">
+                <p style="color: var(--text-muted); margin-bottom: 15px;">Live feed from ANPR Cameras.</p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Plate Read</th>
+                                <th>Event Type</th>
+                                <th>Confidence</th>
+                                <th>Timestamp</th>
+                                <th>Captured By</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-tbody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toast-msg">Updated</span></div>
+
+    <script>
+        // --- SUPABASE SETUP ---
+        const SB_URL = "https://vlxyoxuejydfpclhxczr.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZseHlveHVlanlkZnBjbGh4Y3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzMjEsImV4cCI6MjA4NjQwNTMyMX0.0EDvZze2wMM_w1gqGxbgylfH9V3krfk87I7u3bUuCro";
+        const sb = supabase.createClient(SB_URL, SB_KEY);
+
+        // --- CORE INITIALIZATION ---
+        async function init() {
+            // 1. Security Check: Are they logged in?
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { window.location.href = "/"; return; }
+
+            // 2. Security Check: Are they actually an Admin?
+            const { data: profile } = await sb.from("Profiles").select("role").eq("id", session.user.id).single();
+            if (!profile || profile.role !== "Admin") {
+                alert("ACCESS DENIED: Insufficient Privileges.");
+                window.location.href = "/"; 
+                return;
+            }
+
+            // 3. Load Data
+            loadDashboard();
+            
+            // 4. Set intervals for live data polling
+            setInterval(loadDashboard, 10000);
+        }
+
+        // --- TAB SWITCHING LOGIC ---
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
+            element.classList.add('active');
+
+            const titles = {
+                'dashboard': 'System Dashboard',
+                'users': 'User Hierarchy Management',
+                'infrastructure': 'Hardware Infrastructure',
+                'logs': 'ANPR Operations Log'
+            };
+            document.getElementById('header-title').innerText = titles[tabId];
+
+            // Load specific tab data
+            if(tabId === 'dashboard') loadDashboard();
+            if(tabId === 'users') loadUsers();
+            if(tabId === 'infrastructure') loadDevices();
+            if(tabId === 'logs') loadLogs();
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        // --- DASHBOARD LOGIC ---
+        async function loadDashboard() {
+            // Stats
+            const { count: userCount } = await sb.from('Profiles').select('*', { count: 'exact', head: true });
+            const { count: deviceCount } = await sb.from('Devices').select('*', { count: 'exact', head: true });
+            const { count: scanCount } = await sb.from('ParkingEvents').select('*', { count: 'exact', head: true });
+            
+            // Simulated Revenue from Bookings
+            const { data: bookings } = await sb.from('Bookings').select('price_charged');
+            let rev = 0;
+            if(bookings) bookings.forEach(b => rev += parseFloat(b.price_charged || 0));
+
+            document.getElementById('stat-users').innerText = userCount || 0;
+            document.getElementById('stat-devices').innerText = deviceCount || 0;
+            document.getElementById('stat-scans').innerText = scanCount || 0;
+            document.getElementById('stat-revenue').innerText = "₹" + rev;
+
+            // Load Slots
+            const { data: slots } = await sb.from('Slots').select('*').order('position');
+            const slotContainer = document.getElementById('dashboard-slots');
+            slotContainer.innerHTML = '';
+            
+            if(slots) {
+                slots.forEach(s => {
+                    let color = s.status === 'free' ? 'var(--success)' : (s.status === 'reserved' ? 'var(--warning)' : 'var(--danger)');
+                    slotContainer.innerHTML += `
+                        <div style="background: var(--bg-card); padding: 15px; border-radius: 8px; border-left: 4px solid ${color};">
+                            <h4 style="font-size:1.1rem;">${s.name}</h4>
+                            <p style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; margin-top:5px;">${s.status}</p>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        // --- USER MANAGEMENT LOGIC ---
+        async function loadUsers() {
+            const { data: users } = await sb.from('Profiles').select('*').order('created_at', { ascending: false });
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = '';
+
+            if (users) {
+                users.forEach(u => {
+                    const idShort = u.id.split('-')[0] + '...';
+                    const badgeClass = u.role === 'Admin' ? 'admin' : (u.role === 'Operator' ? 'operator' : '');
+                    
+                    // NOTE: We MUST put quotes around '${u.id}' in the onchange string
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-family: monospace; color: var(--text-muted);">${idShort}</td>
+                            <td style="font-weight: 500;">${u.email || 'N/A'}</td>
+                            <td><span class="badge ${badgeClass}">${u.role}</span></td>
+                            <td>
+                                <select class="table-select" onchange="updateUserRole('${u.id}', this.value)">
+                                    <option value="Customer" ${u.role === 'Customer' ? 'selected' : ''}>Customer</option>
+                                    <option value="Operator" ${u.role === 'Operator' ? 'selected' : ''}>Operator</option>
+                                    <option value="Admin" ${u.role === 'Admin' ? 'selected' : ''}>Admin</option>
+                                </select>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        async function updateUserRole(userId, newRole) {
+            const { error } = await sb.from('Profiles').update({ role: newRole }).eq('id', userId);
+            if (error) {
+                alert("Failed to update role: " + error.message);
+            } else {
+                showToast("Hierarchy privileges updated.");
+                loadUsers(); // Refresh to update badges
+            }
+        }
+
+        // --- DEVICE LOGIC ---
+        async function loadDevices() {
+            const { data: devices } = await sb.from('Devices').select('*').order('created_at', { ascending: false });
+            const tbody = document.getElementById('devices-tbody');
+            tbody.innerHTML = '';
+
+            if (devices) {
+                devices.forEach(d => {
+                    const statusColor = d.status === 'ONLINE' ? 'var(--success)' : 'var(--danger)';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${d.device_id}</strong></td>
+                            <td><span class="badge" style="background: rgba(255,255,255,0.1);">${d.device_type}</span></td>
+                            <td style="color: ${statusColor}; font-weight:bold;">
+                                <i class="fa-solid fa-circle" style="font-size:10px;"></i> ${d.status}
+                            </td>
+                            <td style="color: var(--text-muted); font-size:0.85rem;">
+                                ${new Date(d.last_seen).toLocaleString()}
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        // --- ANPR LOGS LOGIC ---
+        async function loadLogs() {
+            const { data: logs } = await sb.from('ParkingEvents').select('*').order('created_at', { ascending: false }).limit(50);
+            const tbody = document.getElementById('logs-tbody');
+            tbody.innerHTML = '';
+
+            if (logs) {
+                logs.forEach(l => {
+                    const badgeClass = l.event_type === 'ENTRY' ? 'entry' : 'exit';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-family: monospace; font-size:1.1rem; font-weight:700;">${l.plate_number}</td>
+                            <td><span class="badge ${badgeClass}">${l.event_type}</span></td>
+                            <td style="color: var(--accent);">${(l.confidence * 100).toFixed(1)}%</td>
+                            <td style="font-size:0.85rem; color:var(--text-muted);">${new Date(l.created_at).toLocaleString()}</td>
+                            <td style="font-size:0.85rem;">${l.device_id || 'System'}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        // --- LOGOUT ---
+        async function logout() {
+            await sb.auth.signOut();
+            window.location.href = "/";
+        }
+
+        // Boot
+        window.onload = init;
+    </script>
+</body>
+</html>
