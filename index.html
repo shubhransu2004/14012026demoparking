@@ -37,10 +37,7 @@
         .orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, #1e293b, transparent); top: -20%; left: -10%; }
         .orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(100, 255, 218, 0.15), transparent); bottom: -10%; right: -10%; }
         
-        @keyframes floatOrb {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, -50px); }
-        }
+        @keyframes floatOrb { 0% { transform: translate(0, 0); } 100% { transform: translate(50px, -50px); } }
 
         /* Glass Panel */
         .glass-panel {
@@ -209,10 +206,10 @@
                     return;
                 }
 
-                // If signup successful, automatically insert them into Profiles table as Customer
+                // FIX: Insert auth.user.id into the auth_user_id column!
                 if (data.user) {
                     const { error: profileErr } = await sb.from("Profiles").insert([{
-                        id: data.user.id,
+                        auth_user_id: data.user.id, 
                         email: data.user.email,
                         role: 'Customer'
                     }]);
@@ -230,29 +227,50 @@
             }
         }
 
-        // --- ROLE-BASED ROUTING ---
+        // --- BULLETPROOF ROLE-BASED ROUTING ---
         async function routeUser(user) {
             if (!user) return;
 
-            const { data: profile, error } = await sb
+            document.getElementById('form-subtitle').innerText = "Authenticating identity...";
+
+            // FIX: Match by auth_user_id first
+            let { data: profile, error } = await sb
                 .from("Profiles")
                 .select("role")
-                .eq("id", user.id)
+                .eq("auth_user_id", user.id)
                 .single();
 
-            if (error || !profile) {
-                // Fallback if profile fetch fails
-                window.location.href = '/customer/'; 
-                return;
+            // FALLBACK: If auth_user_id fails, search by email to be 100% safe
+            if (!profile) {
+                console.log("Auth ID not matched. Attempting email match...");
+                const fallbackRes = await sb
+                    .from("Profiles")
+                    .select("role")
+                    .eq("email", user.email)
+                    .single();
+                
+                profile = fallbackRes.data;
             }
 
             // Route based on database role
-            if (profile.role === 'Admin') {
-                window.location.href = '/admin/';
-            } else if (profile.role === 'Operator') {
-                window.location.href = '/operator/';
+            if (profile) {
+                document.getElementById('form-subtitle').innerText = `Welcome back. Accessing ${profile.role} Portal...`;
+                
+                // Adding slight delay so the user can read the status text
+                setTimeout(() => {
+                    if (profile.role === 'Admin') {
+                        window.location.href = '/admin/';
+                    } else if (profile.role === 'Operator') {
+                        window.location.href = '/operator/';
+                    } else {
+                        window.location.href = '/customer/';
+                    }
+                }, 800);
             } else {
-                window.location.href = '/customer/';
+                showMessage("Profile configuration error. Contact System Admin.");
+                setLoading(false);
+                // Logging out so they aren't stuck in a broken session
+                await sb.auth.signOut();
             }
         }
 
@@ -264,7 +282,6 @@
             card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
             card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
             
-            // Subtle 3D tilt
             const centerX = window.innerWidth / 2;
             const centerY = window.innerHeight / 2;
             const rotateX = ((e.clientY - centerY) / centerY) * -3; 
@@ -292,10 +309,11 @@
 
         // Fade in on load
         window.onload = () => {
-            // Check if already logged in
             sb.auth.getSession().then(({ data: { session } }) => {
                 if (session) {
-                    document.getElementById('form-subtitle').innerText = "Session found, routing...";
+                    document.getElementById('form-subtitle').innerText = "Active session detected. Routing...";
+                    card.classList.add('visible');
+                    setLoading(true);
                     routeUser(session.user);
                 } else {
                     setTimeout(() => card.classList.add('visible'), 300);
