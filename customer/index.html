@@ -201,19 +201,26 @@
             if (!session) { window.location.href = "/"; return; }
 
             document.getElementById('userEmailDisplay').innerText = session.user.email;
-            currentUserProfileId = session.user.id; // Using Auth ID as Profile ID per your schema
 
-            // Verify they are a Customer
-            const { data: profile } = await sb.from("Profiles").select("role").eq("id", currentUserProfileId).single();
-            if (profile && (profile.role === "Admin" || profile.role === "Operator")) {
-                // Technically an Admin could view this, but let's strictly route them away if they land here by mistake
-                // window.location.href = profile.role === "Admin" ? "/admin" : "/operator";
+            // FIX: Get the actual Profile ID for the database foreign key relationships
+            let { data: profile } = await sb.from("Profiles").select("id, role").eq("auth_user_id", session.user.id).single();
+            
+            if (!profile) {
+                const fallback = await sb.from("Profiles").select("id, role").eq("email", session.user.email).single();
+                profile = fallback?.data;
             }
+
+            if (!profile) {
+                alert("Error: Database profile missing. Contact support.");
+                return;
+            }
+
+            // Save the REAL Profile ID for the Bookings table
+            currentUserProfileId = profile.id; 
 
             fetchSlots();
             setInterval(fetchSlots, 5000); // Live poll every 5s
         }
-
         // --- FETCH & RENDER SLOTS ---
         async function fetchSlots() {
             const { data: slots, error } = await sb.from("Slots").select("*").order("floor").order("position");
