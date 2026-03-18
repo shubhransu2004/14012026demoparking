@@ -315,7 +315,13 @@
             if (!session) { window.location.href = "/"; return; }
 
             // 2. Security Check: Are they actually an Admin?
-            const { data: profile } = await sb.from("Profiles").select("role").eq("id", session.user.id).single();
+            let { data: profile } = await sb.from("Profiles").select("role").eq("auth_user_id", session.user.id).single();
+            
+            if (!profile) {
+                const fallback = await sb.from("Profiles").select("role").eq("email", session.user.email).single();
+                profile = fallback?.data;
+            }
+
             if (!profile || profile.role !== "Admin") {
                 alert("ACCESS DENIED: Insufficient Privileges.");
                 window.location.href = "/"; 
