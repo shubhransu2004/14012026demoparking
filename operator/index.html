@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operator Console | FeeParking</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+    <style>
+        :root {
+            --bg-base: #020617; --bg-surface: #0f172a; --bg-card: #1e293b;
+            --border-light: #334155; --text-main: #f8fafc; --text-muted: #94a3b8;
+            --accent: #38bdf8; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --sidebar-width: 250px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg-base); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* Sidebar */
+        .sidebar { width: var(--sidebar-width); background: var(--bg-surface); border-right: 1px solid var(--border-light); display: flex; flex-direction: column; padding: 1.5rem 0; z-index: 50; }
+        .brand { padding: 0 1.5rem 2rem; font-size: 1.3rem; font-weight: 800; color: var(--text-main); border-bottom: 1px solid var(--border-light); margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
+        .brand i { color: var(--warning); }
+        .nav-item { padding: 1rem 1.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 12px; font-weight: 500; cursor: pointer; transition: 0.2s; border-left: 3px solid transparent; }
+        .nav-item:hover, .nav-item.active { background: rgba(245, 158, 11, 0.05); color: var(--warning); border-left-color: var(--warning); }
+        .logout-btn { margin: auto 1.5rem 0; padding: 10px; background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; width: calc(100% - 3rem); }
+        .logout-btn:hover { background: var(--danger); color: white; }
+
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .top-header { padding: 1.5rem 2.5rem; border-bottom: 1px solid var(--border-light); background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 40; }
+        .content-area { padding: 2.5rem; }
+        .tab-section { display: none; animation: fadeIn 0.3s ease; }
+        .tab-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Cards & UI */
+        .card { background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-light); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+        
+        .slot { padding: 15px; border-radius: 8px; text-align: center; border: 2px solid; cursor: pointer; transition: 0.2s; font-weight: 600; }
+        .slot.free { background: rgba(16, 185, 129, 0.1); border-color: var(--success); color: var(--success); }
+        .slot.reserved { background: rgba(245, 158, 11, 0.1); border-color: var(--warning); color: var(--warning); }
+        .slot.occupied { background: rgba(239, 68, 68, 0.1); border-color: var(--danger); color: var(--danger); box-shadow: 0 0 15px rgba(239,68,68,0.2); }
+        .slot:hover { transform: scale(1.02); }
+
+        .btn { padding: 12px 20px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: var(--accent); color: #000; }
+        .btn-primary:hover { background: #0ea5e9; }
+        .btn-success { background: var(--success); color: #000; }
+        .btn-danger { background: var(--danger); color: white; }
+
+        input { width: 100%; padding: 12px; background: var(--bg-base); border: 1px solid var(--border-light); border-radius: 6px; color: white; font-family: 'Inter'; margin-bottom: 15px; outline: none; }
+        input:focus { border-color: var(--warning); }
+        select { width: 100%; padding: 12px; background: var(--bg-base); border: 1px solid var(--border-light); border-radius: 6px; color: white; margin-bottom: 15px; outline: none; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid var(--border-light); text-align: left; }
+        th { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; background: rgba(0,0,0,0.2); }
+
+        /* QR Overlay */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 200; }
+        .modal { background: var(--bg-card); padding: 2rem; border-radius: 12px; text-align: center; border: 1px solid var(--accent); width: 400px; }
+        .modal h2 { margin-bottom: 15px; }
+        #qr-container { background: white; padding: 15px; border-radius: 8px; display: inline-block; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="brand"><i class="fa-solid fa-headset"></i> OPERATOR</div>
+        
+        <div class="nav-item active" onclick="switchTab('dashboard', this)"><i class="fa-solid fa-table-cells"></i> Facility Layout</div>
+        <div class="nav-item" onclick="switchTab('walkin', this)"><i class="fa-solid fa-user-plus"></i> Walk-In Registration</div>
+        <div class="nav-item" onclick="switchTab('exit', this)"><i class="fa-solid fa-right-from-bracket"></i> Exit & Payment</div>
+        
+        <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-power-off"></i> Logout</button>
+    </div>
+
+    <div class="main-content">
+        <div class="top-header">
+            <h2 id="header-title">Facility Layout & Gate Control</h2>
+        </div>
+
+        <div class="content-area">
+            
+            <div id="tab-dashboard" class="tab-section active">
+                <div class="grid-2">
+                    <div class="card" style="text-align: center;">
+                        <h3 style="margin-bottom: 15px; color: var(--text-muted);">Entry Gate (Zone A)</h3>
+                        <button class="btn btn-success" onclick="alert('Command Sent: ENTRY GATE OPEN')"><i class="fa-solid fa-arrow-up"></i> Open Gate</button>
+                        <button class="btn btn-danger" onclick="alert('Command Sent: ENTRY GATE CLOSE')"><i class="fa-solid fa-arrow-down"></i> Close Gate</button>
+                    </div>
+                    <div class="card" style="text-align: center;">
+                        <h3 style="margin-bottom: 15px; color: var(--text-muted);">Exit Gate (Zone B)</h3>
+                        <button class="btn btn-success" onclick="alert('Command Sent: EXIT GATE OPEN')"><i class="fa-solid fa-arrow-up"></i> Open Gate</button>
+                        <button class="btn btn-danger" onclick="alert('Command Sent: EXIT GATE CLOSE')"><i class="fa-solid fa-arrow-down"></i> Close Gate</button>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom: 15px; color: var(--text-muted);">Live Slot Status (Click to override)</h3>
+                <div id="slots-grid" class="grid-4">
+                    <div style="color:var(--text-muted);">Loading live data...</div>
+                </div>
+            </div>
+
+            <div id="tab-walkin" class="tab-section">
+                <div class="card" style="max-width: 600px; margin: 0 auto;">
+                    <h3 style="margin-bottom: 20px; color: var(--warning);"><i class="fa-solid fa-id-card"></i> Register Customer to DB</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Use this to manually add customers who arrive without prior booking directly into the <code>customers</code> table.</p>
+                    
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Customer Email</label>
+                    <input type="email" id="walkin-email" placeholder="customer@email.com">
+                    
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Vehicle Number</label>
+                    <input type="text" id="walkin-plate" placeholder="OD 02 AB 1234" oninput="this.value = this.value.toUpperCase()">
+
+                    <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="registerWalkIn()">Register & Allocate Slot</button>
+                </div>
+            </div>
+
+            <div id="tab-exit" class="tab-section">
+                <div class="card" style="max-width: 600px; margin: 0 auto;">
+                    <h3 style="margin-bottom: 20px; color: var(--success);"><i class="fa-solid fa-cash-register"></i> Process Exit Payment</h3>
+                    
+                    <label style="font-size: 0.85rem; color: var(--text-muted);">Select Vehicle Ready for Exit</label>
+                    <select id="exit-vehicle-select">
+                        <option value="">Loading vehicles...</option>
+                    </select>
+
+                    <button class="btn btn-success" style="width: 100%; justify-content: center;" onclick="generateQR()">Generate UPI QR Code</button>
+                </div>
+
+                <div class="card" style="margin-top: 30px;">
+                    <h3 style="margin-bottom: 15px; color: var(--text-muted);">Today's Processed Payments</h3>
+                    <table>
+                        <thead><tr><th>Plate</th><th>Amount</th><th>Timestamp</th></tr></thead>
+                        <tbody id="payments-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="overlay" id="qr-overlay">
+        <div class="modal">
+            <h2>Scan to Pay</h2>
+            <h1 id="qr-fee" style="color: var(--success); margin-bottom: 15px;">₹0</h1>
+            <div id="qr-container"></div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn" style="background: transparent; border: 1px solid var(--border-light); color: white;" onclick="document.getElementById('qr-overlay').style.display='none'">Cancel</button>
+                <button class="btn btn-success" onclick="confirmPayment()">Payment Received</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- SUPABASE SETUP ---
+        const SB_URL = "https://vlxyoxuejydfpclhxczr.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZseHlveHVlanlkZnBjbGh4Y3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzMjEsImV4cCI6MjA4NjQwNTMyMX0.0EDvZze2wMM_w1gqGxbgylfH9V3krfk87I7u3bUuCro";
+        const sb = supabase.createClient(SB_URL, SB_KEY);
+
+        let activePlateForExit = "";
+        let activeFee = 0;
+        let activeSlotIdForExit = null;
+
+        async function init() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { window.location.href = "/"; return; }
+
+            // Verify Role (Allow Admin or Operator)
+            const { data: profile } = await sb.from("Profiles").select("role").eq("id", session.user.id).single();
+            if (!profile || (profile.role !== "Operator" && profile.role !== "Admin")) {
+                alert("ACCESS DENIED: Operator Privileges Required.");
+                window.location.href = "/"; return;
+            }
+
+            fetchData();
+            setInterval(fetchData, 5000);
+        }
+
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            element.classList.add('active');
+
+            const titles = { 'dashboard': 'Facility Layout & Gate Control', 'walkin': 'Walk-In Database Registration', 'exit': 'Exit & Payment Processing' };
+            document.getElementById('header-title').innerText = titles[tabId];
+            fetchData();
+        }
+
+        async function fetchData() {
+            // 1. Fetch Slots
+            const { data: slots } = await sb.from("Slots").select("*").order("position");
+            if (slots) {
+                const grid = document.getElementById("slots-grid");
+                grid.innerHTML = "";
+                slots.forEach(s => {
+                    grid.innerHTML += `
+                        <div class="slot ${s.status}" onclick="overrideSlot('${s.id}', '${s.status}')">
+                            <div style="font-size: 1.2rem;">${s.name}</div>
+                            <div style="font-size: 0.75rem; text-transform: uppercase; margin-top: 5px;">${s.status}</div>
+                        </div>`;
+                });
+            }
+
+            // 2. Fetch Active Bookings for Exit Dropdown (Cars currently in the facility)
+            const { data: activeBookings } = await sb.from("Bookings").select("slot_id, plate_number").eq("status", "confirmed");
+            if (activeBookings) {
+                const select = document.getElementById("exit-vehicle-select");
+                const currentVal = select.value;
+                select.innerHTML = '<option value="">-- Select Vehicle --</option>';
+                activeBookings.forEach(b => {
+                    if(b.plate_number) select.innerHTML += `<option value="${b.plate_number}|${b.slot_id}">${b.plate_number}</option>`;
+                });
+                if(currentVal) select.value = currentVal; // preserve selection during poll
+            }
+
+            // 3. Fetch Payments
+            const { data: payments } = await sb.from("Payments").select("*").order("created_at", { ascending: false }).limit(10);
+            if (payments) {
+                const tbody = document.getElementById("payments-tbody");
+                tbody.innerHTML = "";
+                payments.forEach(p => {
+                    tbody.innerHTML += `<tr><td><strong>${p.plate_number}</strong></td><td style="color:var(--success);">₹${p.amount}</td><td>${new Date(p.created_at).toLocaleString()}</td></tr>`;
+                });
+            }
+        }
+
+        // --- OVERRIDE SLOT (Operator Power) ---
+        async function overrideSlot(slotId, currentStatus) {
+            let nextStatus = currentStatus === 'free' ? 'occupied' : 'free';
+            if (confirm(`Force override this slot to ${nextStatus.toUpperCase()}?`)) {
+                await sb.from("Slots").update({ status: nextStatus }).eq("id", slotId);
+                fetchData();
+            }
+        }
+
+        // --- REGISTER WALKIN CUSTOMER ---
+        async function registerWalkIn() {
+            const email = document.getElementById("walkin-email").value.trim();
+            const plateRaw = document.getElementById("walkin-plate").value.trim();
+            const plate = plateRaw.replace(/[\s-]/g, '').toUpperCase();
+
+            if (!email || !plate) { alert("Please provide both email and vehicle number."); return; }
+
+            // 1. Insert into public.customers table
+            const { error: custErr } = await sb.from("customers").insert([{ email: email, vehicle_number: plate }]);
+            if (custErr) { alert("Error adding to customers DB: " + custErr.message); return; }
+
+            // 2. Find a free slot to allocate
+            const { data: freeSlots } = await sb.from("Slots").select("id, name").eq("status", "free").limit(1);
+            if (!freeSlots || freeSlots.length === 0) {
+                alert("Customer added to DB, but facility is currently FULL. No slot assigned.");
+                return;
+            }
+
+            const allocatedSlot = freeSlots[0];
+            
+            // 3. Update Slot Status
+            await sb.from("Slots").update({ status: 'occupied' }).eq("id", allocatedSlot.id);
+            
+            // 4. Create Booking
+            const startIso = new Date().toISOString();
+            const endIso = new Date(Date.now() + 60*60*1000).toISOString();
+            await sb.from("Bookings").insert([{
+                slot_id: allocatedSlot.id,
+                start_at: startIso,
+                end_at: endIso,
+                price_charged: 0,
+                currency: 'INR',
+                status: 'confirmed',
+                plate_number: plate,
+                time_range: `[${startIso},${endIso})`
+            }]);
+
+            alert(`Success! Customer registered in DB.\nAssigned to: ${allocatedSlot.name}`);
+            document.getElementById("walkin-email").value = "";
+            document.getElementById("walkin-plate").value = "";
+            fetchData();
+        }
+
+        // --- PAYMENTS & EXIT ---
+        function generateQR() {
+            const val = document.getElementById("exit-vehicle-select").value;
+            if (!val) { alert("Select a vehicle first."); return; }
+
+            const parts = val.split("|");
+            activePlateForExit = parts[0];
+            activeSlotIdForExit = parts[1];
+            
+            activeFee = Math.floor(Math.random() * 60) + 40; // Dynamic calc could go here
+            document.getElementById("qr-fee").innerText = "₹" + activeFee;
+
+            const upi = `upi://pay?pa=feeparking@upi&pn=FeeParking&am=${activeFee}&cu=INR&tn=${activePlateForExit}`;
+            document.getElementById("qr-overlay").style.display = "flex";
+            
+            QRCode.toCanvas(upi, { width: 250, margin: 2 }, (err, canvas) => {
+                const container = document.getElementById("qr-container");
+                container.innerHTML = "";
+                container.appendChild(canvas);
+            });
+        }
+
+        async function confirmPayment() {
+            // 1. Log Payment
+            await sb.from("Payments").insert([{ plate_number: activePlateForExit, amount: activeFee }]);
+            
+            // 2. Free up the slot
+            await sb.from("Slots").update({ status: 'free' }).eq("id", activeSlotIdForExit);
+            
+            // 3. Mark booking as completed
+            await sb.from("Bookings").update({ status: 'completed' }).eq("plate_number", activePlateForExit).eq("status", "confirmed");
+
+            // 4. Log Exit Event
+            await sb.from("ParkingEvents").insert([{ plate_number: activePlateForExit, event_type: "EXIT", device_id: "MANUAL_OP", processed: true }]);
+
+            alert(`Payment of ₹${activeFee} recorded. Slot freed and Exit logged!`);
+            document.getElementById('qr-overlay').style.display = 'none';
+            fetchData();
+        }
+
+        async function logout() { await sb.auth.signOut(); window.location.href = "/"; }
+        window.onload = init;
+    </script>
+</body>
+</html>
