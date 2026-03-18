@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Portal | FeeParking</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --bg-base: #020617;
+            --bg-card: #0f172a;
+            --border-light: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- NAVBAR --- */
+        .navbar {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-light);
+            padding: 1rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.4rem; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; gap: 10px;
+        }
+        .brand i { color: var(--accent); }
+
+        .user-controls { display: flex; align-items: center; gap: 20px; }
+        .user-email { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
+        
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .logout-btn:hover { background: var(--danger); color: white; transform: translateY(-1px); }
+
+        /* --- MAIN CONTENT --- */
+        .container { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; flex: 1; width: 100%; }
+
+        .page-header { margin-bottom: 2.5rem; text-align: center; }
+        .page-header h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .page-header p { color: var(--text-muted); font-size: 1.1rem; }
+
+        /* --- SLOT GRID --- */
+        .floor-section { margin-bottom: 3.5rem; }
+        .floor-title { 
+            font-size: 1.2rem; font-weight: 700; color: var(--accent); margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .floor-title::after { content: ""; flex: 1; height: 1px; background: var(--border-light); }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .slot {
+            background: var(--bg-card); border: 2px solid var(--border-light);
+            border-radius: 12px; padding: 1.5rem; text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden;
+        }
+
+        .slot h3 { font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--text-main); }
+        .slot p.status-text { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Status Variants */
+        .slot.free { border-color: rgba(16, 185, 129, 0.5); cursor: pointer; }
+        .slot.free p.status-text { color: var(--success); }
+        .slot.free:hover { transform: translateY(-5px); border-color: var(--success); box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05); }
+        
+        .slot.reserved { border-color: rgba(245, 158, 11, 0.5); opacity: 0.8; cursor: not-allowed; }
+        .slot.reserved p.status-text { color: var(--warning); }
+        
+        .slot.occupied { border-color: rgba(239, 68, 68, 0.5); opacity: 0.6; cursor: not-allowed; }
+        .slot.occupied p.status-text { color: var(--danger); }
+
+        /* --- MODAL / OVERLAY --- */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 200;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .overlay.show { display: flex; opacity: 1; }
+
+        .modal {
+            background: var(--bg-card); border: 1px solid var(--border-light); padding: 2.5rem;
+            border-radius: 16px; width: 100%; max-width: 400px; text-align: center;
+            transform: translateY(20px); transition: transform 0.3s; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+        .overlay.show .modal { transform: translateY(0); }
+
+        .modal h2 { margin-bottom: 10px; color: var(--text-main); }
+        .modal p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; }
+        
+        .modal input {
+            width: 100%; padding: 12px 16px; background: var(--bg-base); border: 1px solid var(--border-light);
+            border-radius: 8px; color: white; font-family: 'JetBrains Mono', monospace; font-size: 1.1rem;
+            text-align: center; outline: none; margin-bottom: 20px; text-transform: uppercase;
+        }
+        .modal input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1); }
+
+        .btn-group { display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-cancel { background: transparent; border: 1px solid var(--border-light); color: var(--text-muted); }
+        .btn-cancel:hover { background: rgba(255,255,255,0.05); color: white; }
+        .btn-confirm { background: var(--success); color: #000; }
+        .btn-confirm:hover { background: #0ea5e9; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+
+        /* Toast */
+        #toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: var(--bg-card); border: 1px solid var(--accent); padding: 12px 24px;
+            border-radius: 50px; font-weight: 600; color: var(--text-main); z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex; align-items: center; gap: 10px;
+        }
+        #toast.show { transform: translateX(-50%) translateY(0); }
+        #toast i { color: var(--accent); }
+
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="brand"><i class="fa-solid fa-car-side"></i> FEEPARKING</div>
+        <div class="user-controls">
+            <span class="user-email" id="userEmailDisplay">Loading...</span>
+            <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Select Your Parking Space</h1>
+            <p>Real-time availability across all facility floors.</p>
+        </div>
+
+        <div id="facilityLayout">
+            <div style="text-align:center; color:var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin"></i> Synchronizing with sensors...</div>
+        </div>
+    </div>
+
+    <div class="overlay" id="bookingOverlay">
+        <div class="modal">
+            <h2>Reserve <span id="modalSlotName" style="color:var(--accent);">Slot</span></h2>
+            <p>Enter your Vehicle Registration Number</p>
+            <input type="text" id="vehicleInput" placeholder="e.g. OD 02 AB 1234" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
+            <div class="btn-group">
+                <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-confirm" onclick="confirmReservation()">Confirm Booking</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toastMsg"></span></div>
+
+    <script>
+        // --- SUPABASE SETUP ---
+        const SB_URL = "https://vlxyoxuejydfpclhxczr.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZseHlveHVlanlkZnBjbGh4Y3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzMjEsImV4cCI6MjA4NjQwNTMyMX0.0EDvZze2wMM_w1gqGxbgylfH9V3krfk87I7u3bUuCro";
+        const sb = supabase.createClient(SB_URL, SB_KEY);
+
+        let currentUserProfileId = null;
+        let selectedSlotId = null;
+
+        // --- INIT ---
+        async function init() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { window.location.href = "/"; return; }
+
+            document.getElementById('userEmailDisplay').innerText = session.user.email;
+            currentUserProfileId = session.user.id; // Using Auth ID as Profile ID per your schema
+
+            // Verify they are a Customer
+            const { data: profile } = await sb.from("Profiles").select("role").eq("id", currentUserProfileId).single();
+            if (profile && (profile.role === "Admin" || profile.role === "Operator")) {
+                // Technically an Admin could view this, but let's strictly route them away if they land here by mistake
+                // window.location.href = profile.role === "Admin" ? "/admin" : "/operator";
+            }
+
+            fetchSlots();
+            setInterval(fetchSlots, 5000); // Live poll every 5s
+        }
+
+        // --- FETCH & RENDER SLOTS ---
+        async function fetchSlots() {
+            const { data: slots, error } = await sb.from("Slots").select("*").order("floor").order("position");
+            if (error) { console.error("Error fetching slots:", error); return; }
+
+            const layout = document.getElementById("facilityLayout");
+            layout.innerHTML = "";
+
+            // Group by floor
+            const floors = {};
+            slots.forEach(slot => {
+                if (!floors[slot.floor]) floors[slot.floor] = [];
+                floors[slot.floor].push(slot);
+            });
+
+            for (const [floorNum, floorSlots] of Object.entries(floors)) {
+                const section = document.createElement("div");
+                section.className = "floor-section";
+                
+                const title = document.createElement("div");
+                title.className = "floor-title";
+                title.innerHTML = `<i class="fa-solid fa-layer-group"></i> Level ${floorNum}`;
+                section.appendChild(title);
+
+                const grid = document.createElement("div");
+                grid.className = "grid";
+
+                floorSlots.forEach(slot => {
+                    const el = document.createElement("div");
+                    el.className = `slot ${slot.status}`;
+                    
+                    let icon = slot.status === 'free' ? 'fa-square-parking' : (slot.status === 'reserved' ? 'fa-clock' : 'fa-car');
+                    let statusTxt = slot.status === 'free' ? 'Available' : slot.status;
+
+                    // Only attach click event if it's free
+                    if (slot.status === 'free') {
+                        el.onclick = () => openModal(slot.id, slot.name);
+                    }
+
+                    el.innerHTML = `
+                        <h3>${slot.name}</h3>
+                        <p class="status-text"><i class="fa-solid ${icon}"></i> ${statusTxt}</p>
+                    `;
+                    grid.appendChild(el);
+                });
+
+                section.appendChild(grid);
+                layout.appendChild(section);
+            }
+        }
+
+        // --- MODAL LOGIC & REGEX ---
+        function openModal(slotId, slotName) {
+            selectedSlotId = slotId;
+            document.getElementById('modalSlotName').innerText = slotName;
+            document.getElementById('vehicleInput').value = "";
+            document.getElementById('bookingOverlay').classList.add('show');
+            document.getElementById('vehicleInput').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('bookingOverlay').classList.remove('show');
+            selectedSlotId = null;
+        }
+
+        async function confirmReservation() {
+            const rawInput = document.getElementById('vehicleInput').value.trim();
+            
+            // REGEX for Indian Number Plates (e.g. OD 02 AB 1234, MH12XY9999, DL 1 Z 1234)
+            // Allows optional spaces or hyphens
+            const plateRegex = /^[A-Z]{2}[ -]?[0-9]{1,2}[ -]?[A-Z]{1,3}[ -]?[0-9]{4}$/i;
+
+            if (!plateRegex.test(rawInput)) {
+                alert("Invalid Vehicle Number format. Please enter a valid Indian registration (e.g., OD 02 AB 1234)");
+                return;
+            }
+
+            // Normalize the plate for the database (remove spaces/hyphens)
+            const normalizedPlate = rawInput.replace(/[\s-]/g, '').toUpperCase();
+
+            // 1. Update Slot Status to Reserved
+            const { error: slotErr } = await sb.from("Slots").update({ status: 'reserved' }).eq("id", selectedSlotId);
+            
+            if (slotErr) {
+                alert("Failed to secure slot. Someone else might have booked it.");
+                closeModal();
+                fetchSlots();
+                return;
+            }
+
+            // 2. Insert into Bookings Table (Using your exact schema)
+            const now = new Date();
+            const end = new Date(now.getTime() + 60 * 60 * 1000); // Default 1 hour booking
+
+            const { error: bookErr } = await sb.from("Bookings").insert([{
+                slot_id: selectedSlotId,
+                customer_profile_id: currentUserProfileId,
+                start_at: now.toISOString(),
+                end_at: end.toISOString(),
+                price_charged: 0.00, // Base for reservation
+                currency: 'INR',
+                status: 'confirmed',
+                plate_number: normalizedPlate
+            }]);
+
+            if (bookErr) {
+                console.error(bookErr);
+                alert("Slot reserved, but failed to log booking details. Please contact support.");
+            } else {
+                showToast(`Slot booked successfully for ${normalizedPlate}`);
+            }
+
+            closeModal();
+            fetchSlots();
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        // --- AUTH ---
+        async function logout() {
+            await sb.auth.signOut();
+            window.location.href = "/";
+        }
+
+        // Boot
+        window.onload = init;
+    </script>
+</body>
+</html>
