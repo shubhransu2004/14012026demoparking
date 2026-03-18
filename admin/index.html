@@ -3,497 +3,532 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Command Center | FeeParking</title>
+    <title>Super Admin Command Center | FeeParking</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
     <style>
+        /* --- CSS VARIABLES: Centralized color scheme for easy theming --- */
         :root {
-            --bg-base: #020617;
-            --bg-surface: #0f172a;
-            --bg-card: #1e293b;
-            --border-light: #334155;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #38bdf8;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --sidebar-width: 260px;
+            --bg-base: #020617; --bg-surface: #0f172a; --bg-card: #1e293b;
+            --border-light: #334155; --text-main: #f8fafc; --text-muted: #94a3b8;
+            --accent: #38bdf8; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --purple: #a855f7; --maintenance: #64748b; --sidebar-width: 260px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-base); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-base);
-            color: var(--text-main);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* --- SIDEBAR --- */
-        .sidebar {
-            width: var(--sidebar-width);
-            background-color: var(--bg-surface);
-            border-right: 1px solid var(--border-light);
-            display: flex;
-            flex-direction: column;
-            padding: 1.5rem 0;
-            z-index: 50;
-        }
-
-        .brand {
-            padding: 0 1.5rem 2rem 1.5rem;
-            font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: 1px;
-            color: var(--text-main);
-            border-bottom: 1px solid var(--border-light);
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .brand i { color: var(--accent); }
-
-        .nav-item {
-            padding: 1rem 1.5rem;
-            color: var(--text-muted);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border-left: 3px solid transparent;
-        }
-
-        .nav-item:hover, .nav-item.active {
-            background-color: rgba(56, 189, 248, 0.05);
-            color: var(--accent);
-            border-left-color: var(--accent);
-        }
-
-        .user-profile {
-            margin-top: auto;
-            padding: 1.5rem;
-            border-top: 1px solid var(--border-light);
-        }
+        /* --- SIDEBAR NAVIGATION --- */
+        .sidebar { width: var(--sidebar-width); background: var(--bg-surface); border-right: 1px solid var(--border-light); display: flex; flex-direction: column; padding: 1.5rem 0; z-index: 50; }
+        .brand { padding: 0 1.5rem 2rem; font-size: 1.4rem; font-weight: 800; color: var(--text-main); border-bottom: 1px solid var(--border-light); margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
+        .brand i { color: var(--purple); }
+        .nav-item { padding: 1rem 1.5rem; color: var(--text-muted); display: flex; align-items: center; gap: 12px; font-weight: 500; cursor: pointer; transition: 0.2s; border-left: 3px solid transparent; font-size: 0.9rem;}
+        .nav-item:hover, .nav-item.active { background: rgba(168, 85, 247, 0.05); color: var(--purple); border-left-color: var(--purple); }
         
-        .logout-btn {
-            width: 100%; padding: 10px; background: rgba(239, 68, 68, 0.1); color: var(--danger);
-            border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 6px; cursor: pointer;
-            font-weight: 600; transition: 0.2s;
-        }
+        .user-profile { margin-top: auto; padding: 1.5rem; border-top: 1px solid var(--border-light); }
+        .logout-btn { width: 100%; padding: 10px; background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
         .logout-btn:hover { background: var(--danger); color: white; }
 
-        /* --- MAIN CONTENT --- */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-        }
-
-        .top-header {
-            padding: 1.5rem 2.5rem;
-            border-bottom: 1px solid var(--border-light);
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-            position: sticky;
-            top: 0;
-            z-index: 40;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .top-header h2 { font-size: 1.5rem; font-weight: 600; }
+        /* --- MAIN CONTENT WRAPPER --- */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; scroll-behavior: smooth; }
+        .top-header { padding: 1.5rem 2.5rem; border-bottom: 1px solid var(--border-light); background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 40; }
+        .status-indicator { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 700; background: rgba(168, 85, 247, 0.15); color: var(--purple); padding: 6px 12px; border-radius: 50px; letter-spacing: 0.5px; }
         
-        .status-indicator {
-            display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600;
-            background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 6px 12px; border-radius: 50px;
-        }
-        .status-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 8px var(--success); animation: pulse 2s infinite; }
-
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-
         .content-area { padding: 2.5rem; }
+        
+        /* Tab Visibility Logic */
         .tab-section { display: none; animation: fadeIn 0.3s ease; }
         .tab-section.active { display: block; }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- CARDS & GRIDS --- */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem; }
-        .stat-card {
-            background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-light);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; overflow: hidden;
-        }
+        /* --- DASHBOARD CARDS --- */
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: var(--bg-card); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; overflow: hidden; }
         .stat-card h3 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
         .stat-card .value { font-size: 2.5rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
-        .stat-card i { position: absolute; right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.05; }
+        .stat-card i.bg-icon { position: absolute; right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.05; }
 
-        /* --- TABLES --- */
-        .table-container {
-            background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 12px; overflow: hidden;
+        /* --- MATRIX SLOT GRID --- */
+        .floor-section { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px dashed var(--border-light); }
+        .floor-title { font-size: 1.2rem; font-weight: 700; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
+        .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
+        
+        /* Individual Slot Styling & States */
+        .slot { padding: 15px; border-radius: 8px; text-align: center; border: 2px solid; cursor: pointer; transition: 0.2s; position: relative; }
+        .slot:hover { transform: scale(1.03); }
+        .slot h4 { margin-bottom: 5px; font-family: 'JetBrains Mono'; color: white; font-size: 1.2rem;}
+        .slot p { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+
+        .slot.free { background: rgba(16, 185, 129, 0.05); border-color: var(--success); }
+        .slot.free p { color: var(--success); }
+        
+        .slot.reserved { background: rgba(245, 158, 11, 0.05); border-color: var(--warning); }
+        .slot.reserved p { color: var(--warning); }
+        
+        .slot.occupied { background: rgba(239, 68, 68, 0.05); border-color: var(--danger); box-shadow: 0 0 15px rgba(239,68,68,0.15); }
+        .slot.occupied p { color: var(--danger); }
+        
+        /* Maintenance styling looks like a construction zone */
+        .slot.maintenance { 
+            background: repeating-linear-gradient(45deg, rgba(30,41,59,0.8), rgba(30,41,59,0.8) 10px, rgba(51,65,85,0.8) 10px, rgba(51,65,85,0.8) 20px); 
+            border-color: var(--maintenance); opacity: 0.7;
         }
+        .slot.maintenance p { color: var(--text-muted); }
+
+        /* --- UI COMPONENTS (Buttons, Forms, Tables) --- */
+        .btn { padding: 12px 20px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Inter'; }
+        .btn-primary { background: var(--accent); color: #000; }
+        .btn-primary:hover { background: #0ea5e9; }
+        .btn-success { background: var(--success); color: #000; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: #000; }
+        .btn-godmode { background: var(--purple); color: white; }
+        
+        input, select { width: 100%; padding: 12px; background: var(--bg-base); border: 1px solid var(--border-light); border-radius: 6px; color: white; font-family: 'Inter'; margin-bottom: 15px; outline: none; }
+        input:focus, select:focus { border-color: var(--purple); }
+        label { display: block; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 5px;}
+
+        .table-wrapper { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 12px; overflow: hidden; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { background: rgba(0,0,0,0.2); padding: 1rem 1.5rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-light); }
+        th { background: rgba(0,0,0,0.2); padding: 1rem 1.5rem; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border-light); }
         td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-light); font-size: 0.9rem; }
         tr:last-child td { border-bottom: none; }
-        tr:hover td { background: rgba(255,255,255,0.02); }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
 
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; }
-        .badge.entry { background: rgba(16, 185, 129, 0.15); color: var(--success); }
-        .badge.exit { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
-        .badge.admin { background: rgba(56, 189, 248, 0.15); color: var(--accent); }
-        .badge.operator { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
-
-        select.table-select {
-            background: var(--bg-base); color: var(--text-main); border: 1px solid var(--border-light);
-            padding: 6px 10px; border-radius: 6px; outline: none; font-family: 'Inter'; font-size: 0.85rem;
-        }
-        select.table-select:focus { border-color: var(--accent); }
-
-        /* Notification Toast */
-        #toast {
-            position: fixed; bottom: 30px; right: 30px; background: var(--bg-card); border: 1px solid var(--accent);
-            padding: 15px 25px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: none; z-index: 1000; font-weight: 600; color: var(--accent);
-            animation: slideIn 0.3s ease forwards;
-        }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-
+        /* --- MODALS (Overlays) --- */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 200; }
+        .modal { background: var(--bg-card); padding: 2rem; border-radius: 12px; text-align: center; border: 1px solid var(--purple); width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);}
+        #qr-container { background: white; padding: 15px; border-radius: 8px; display: inline-block; margin-bottom: 20px; }
+        
+        #toast { position: fixed; bottom: 30px; right: 30px; background: var(--bg-card); border: 1px solid var(--purple); padding: 15px 25px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; z-index: 1000; font-weight: 600; color: var(--text-main); }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="brand">
-            <i class="fa-solid fa-microchip"></i> FEEPARKING
-        </div>
+        <div class="brand"><i class="fa-solid fa-chess-king"></i> FEEPARKING</div>
         
-        <div class="nav-item active" onclick="switchTab('dashboard', this)">
-            <i class="fa-solid fa-chart-line"></i> Dashboard Overview
-        </div>
-        <div class="nav-item" onclick="switchTab('users', this)">
-            <i class="fa-solid fa-users-gear"></i> User Management
-        </div>
-        <div class="nav-item" onclick="switchTab('infrastructure', this)">
-            <i class="fa-solid fa-server"></i> Hardware & Devices
-        </div>
-        <div class="nav-item" onclick="switchTab('logs', this)">
-            <i class="fa-solid fa-list-check"></i> ANPR Event Logs
-        </div>
+        <div class="nav-item active" onclick="switchTab('dashboard', this)"><i class="fa-solid fa-chart-line"></i> Command Dashboard</div>
+        <div class="nav-item" onclick="switchTab('facility', this)"><i class="fa-solid fa-building-shield"></i> Live Operations Matrix</div>
+        <div class="nav-item" onclick="switchTab('audit', this)"><i class="fa-solid fa-file-invoice-dollar"></i> Financial Audit Log</div>
+        <div class="nav-item" onclick="switchTab('users', this)"><i class="fa-solid fa-users-gear"></i> User Hierarchy</div>
+        <div class="nav-item" onclick="switchTab('config', this)"><i class="fa-solid fa-sliders"></i> Database Configs</div>
 
         <div class="user-profile">
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">Logged in as SUPERADMIN</p>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase;">Super Admin Session</p>
             <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-power-off"></i> Terminate Session</button>
         </div>
     </div>
 
     <div class="main-content">
         <div class="top-header">
-            <h2 id="header-title">System Dashboard</h2>
-            <div class="status-indicator">
-                <div class="status-dot"></div>
-                SYSTEM ONLINE & SECURE
-            </div>
+            <h2 id="header-title">Command Dashboard</h2>
+            <div class="status-indicator"><i class="fa-solid fa-shield-halved"></i> SUPER ADMIN ACCESS</div>
         </div>
 
         <div class="content-area">
             
             <div id="tab-dashboard" class="tab-section active">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Total Profiles</h3>
-                        <div class="value" id="stat-users" style="color: var(--accent);">0</div>
-                        <i class="fa-solid fa-users"></i>
+                <div class="grid-4">
+                    <div class="card stat-card"><h3>Total Users</h3><div class="value" id="stat-users" style="color:var(--accent);">0</div><i class="fa-solid fa-users bg-icon"></i></div>
+                    <div class="card stat-card"><h3>Total Bookings</h3><div class="value" id="stat-bookings" style="color:var(--success);">0</div><i class="fa-solid fa-book bg-icon"></i></div>
+                    <div class="card stat-card"><h3>ANPR Scans</h3><div class="value" id="stat-scans">0</div><i class="fa-solid fa-camera bg-icon"></i></div>
+                    <div class="card stat-card"><h3>Total Revenue</h3><div class="value" id="stat-rev" style="color:var(--warning);">₹0</div><i class="fa-solid fa-indian-rupee-sign bg-icon"></i></div>
+                </div>
+            </div>
+
+            <div id="tab-facility" class="tab-section">
+                <div class="grid-2">
+                    <div class="card">
+                        <h3 style="margin-bottom: 15px; color: var(--accent);"><i class="fa-solid fa-user-plus"></i> Walk-In Registration</h3>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">Manually inject un-booked customers into DB.</p>
+                        <input type="email" id="walkin-email" placeholder="Customer Email">
+                        <input type="text" id="walkin-plate" placeholder="Vehicle No. (OD 02 AB 1234)" oninput="this.value = this.value.toUpperCase()">
+                        <button class="btn btn-primary" style="width: 100%;" onclick="adminWalkIn()">Register & Allocate</button>
                     </div>
-                    <div class="stat-card">
-                        <h3>Active Devices</h3>
-                        <div class="value" id="stat-devices" style="color: var(--success);">0</div>
-                        <i class="fa-solid fa-microchip"></i>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Total ANPR Scans</h3>
-                        <div class="value" id="stat-scans" style="color: var(--text-main);">0</div>
-                        <i class="fa-solid fa-camera"></i>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Today's Revenue</h3>
-                        <div class="value" id="stat-revenue" style="color: var(--warning);">₹0</div>
-                        <i class="fa-solid fa-indian-rupee-sign"></i>
+                    <div class="card">
+                        <h3 style="margin-bottom: 15px; color: var(--success);"><i class="fa-solid fa-cash-register"></i> Process Facility Exit</h3>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">Finalize bookings and release slots.</p>
+                        <select id="exit-vehicle-select"><option value="">Loading vehicles...</option></select>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-success" style="flex:2;" onclick="generateQR()">Process Payment</button>
+                            <button class="btn btn-godmode" style="flex:1;" onclick="forceRelease()"><i class="fa-solid fa-skull"></i> Evict</button>
+                        </div>
                     </div>
                 </div>
 
-                <h3 style="margin-bottom: 15px; color: var(--text-muted);">Real-Time Facility Layout</h3>
-                <div class="stats-grid" id="dashboard-slots">
-                    </div>
+                <h3 style="margin: 30px 0 15px 0;">Live Infrastructure Matrix (Click to Override)</h3>
+                <div id="matrix-container"></div>
+            </div>
+
+            <div id="tab-audit" class="tab-section">
+                <p style="color: var(--text-muted); margin-bottom: 15px;">Full financial and operational audit log of all bookings.</p>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>Booking ID</th><th>Vehicle</th><th>Time Slot</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody id="audit-tbody"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div id="tab-users" class="tab-section">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center;">
-                    <p style="color: var(--text-muted);">Modify user access levels and hierarchies.</p>
-                </div>
-                <div class="table-container">
+                <p style="color: var(--text-muted); margin-bottom: 15px;">Elevate customer privileges to Operator or Admin.</p>
+                <div class="table-wrapper">
                     <table>
-                        <thead>
-                            <tr>
-                                <th>UUID</th>
-                                <th>Email Address</th>
-                                <th>Current Role</th>
-                                <th>Actions (Auto-Save)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-tbody">
-                            </tbody>
+                        <thead><tr><th>Profile ID</th><th>Email</th><th>Role</th><th>Admin Action</th></tr></thead>
+                        <tbody id="users-tbody"></tbody>
                     </table>
                 </div>
             </div>
 
-            <div id="tab-infrastructure" class="tab-section">
-                <p style="color: var(--text-muted); margin-bottom: 15px;">Monitor Edge AI Devices and Controllers.</p>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Device ID / Name</th>
-                                <th>Type</th>
-                                <th>Status</th>
-                                <th>Last Seen</th>
-                            </tr>
-                        </thead>
-                        <tbody id="devices-tbody">
-                            </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div id="tab-logs" class="tab-section">
-                <p style="color: var(--text-muted); margin-bottom: 15px;">Live feed from ANPR Cameras.</p>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Plate Read</th>
-                                <th>Event Type</th>
-                                <th>Confidence</th>
-                                <th>Timestamp</th>
-                                <th>Captured By</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logs-tbody">
-                            </tbody>
-                    </table>
+            <div id="tab-config" class="tab-section">
+                <div class="card" style="max-width: 600px;">
+                    <h3 style="margin-bottom: 20px; color: var(--warning);"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone: Database Variables</h3>
+                    <div id="config-container"></div>
                 </div>
             </div>
 
         </div>
     </div>
 
-    <div id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toast-msg">Updated</span></div>
+    <div class="overlay" id="qr-overlay">
+        <div class="modal">
+            <h2>Scan to Pay</h2>
+            <h1 id="qr-fee" style="color: var(--success); margin-bottom: 15px;">₹0</h1>
+            <div id="qr-container"></div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn" style="background: transparent; border: 1px solid var(--border-light); color: white;" onclick="document.getElementById('qr-overlay').style.display='none'">Cancel</button>
+                <button class="btn btn-success" onclick="confirmPayment()">Payment Complete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="override-overlay">
+        <div class="modal">
+            <h2>Command: <span id="override-slot-name" style="color:var(--purple);">Slot</span></h2>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:20px;">Force infrastructure to a specific database state.</p>
+            
+            <input type="hidden" id="override-slot-id">
+            
+            <div style="text-align:left; margin-bottom: 20px;">
+                <label>Target Status</label>
+                <select id="override-status">
+                    <option value="free">Available (Free)</option>
+                    <option value="reserved">Reserved (Pending Arrival)</option>
+                    <option value="occupied">Occupied (Car Parked)</option>
+                    <option value="maintenance">Disabled (Maintenance Mode)</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" style="background: transparent; border: 1px solid var(--border-light); color: white; flex:1;" onclick="document.getElementById('override-overlay').style.display='none'">Cancel</button>
+                <button class="btn btn-godmode" style="flex:1;" onclick="saveSlotState()">Apply Override</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"><i class="fa-solid fa-circle-info"></i> <span id="toast-msg"></span></div>
 
     <script>
-        // --- SUPABASE SETUP ---
+        // -- 1. Supabase Initialization --
         const SB_URL = "https://vlxyoxuejydfpclhxczr.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZseHlveHVlanlkZnBjbGh4Y3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjkzMjEsImV4cCI6MjA4NjQwNTMyMX0.0EDvZze2wMM_w1gqGxbgylfH9V3krfk87I7u3bUuCro";
         const sb = supabase.createClient(SB_URL, SB_KEY);
 
-        // --- CORE INITIALIZATION ---
+        // Global Variables
+        let activePlateForExit = ""; 
+        let activeSlotIdForExit = null; 
+        let activeFee = 0;
+
+        // -- 2. Authentication & Boot --
         async function init() {
-            // 1. Security Check: Are they logged in?
+            // Check session exists
             const { data: { session } } = await sb.auth.getSession();
             if (!session) { window.location.href = "/"; return; }
 
-            // 2. Security Check: Are they actually an Admin?
+            // Verify Super Admin Privileges (Using proper auth_user_id logic)
             let { data: profile } = await sb.from("Profiles").select("role").eq("auth_user_id", session.user.id).single();
-            
             if (!profile) {
                 const fallback = await sb.from("Profiles").select("role").eq("email", session.user.email).single();
                 profile = fallback?.data;
             }
 
             if (!profile || profile.role !== "Admin") {
-                alert("ACCESS DENIED: Insufficient Privileges.");
-                window.location.href = "/"; 
-                return;
+                alert("SECURITY BREACH: Super Admin Privileges Required.");
+                window.location.href = "/"; return;
             }
 
-            // 3. Load Data
+            // Start system
             loadDashboard();
-            
-            // 4. Set intervals for live data polling
-            setInterval(loadDashboard, 10000);
+            setInterval(pollData, 10000); // Auto-refresh data
         }
 
-        // --- TAB SWITCHING LOGIC ---
+        // -- 3. UI Navigation --
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            
             document.getElementById('tab-' + tabId).classList.add('active');
             element.classList.add('active');
 
-            const titles = {
-                'dashboard': 'System Dashboard',
-                'users': 'User Hierarchy Management',
-                'infrastructure': 'Hardware Infrastructure',
-                'logs': 'ANPR Operations Log'
-            };
+            const titles = { 'dashboard':'Command Dashboard', 'facility':'Live Operations Matrix', 'audit':'Financial Audit Log', 'users':'User Hierarchy', 'config':'Database Configurations' };
             document.getElementById('header-title').innerText = titles[tabId];
 
-            // Load specific tab data
+            // Lazy load tab data to save DB queries
             if(tabId === 'dashboard') loadDashboard();
+            if(tabId === 'facility') loadFacility();
+            if(tabId === 'audit') loadAudit();
             if(tabId === 'users') loadUsers();
-            if(tabId === 'infrastructure') loadDevices();
-            if(tabId === 'logs') loadLogs();
+            if(tabId === 'config') loadConfig();
         }
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-msg').innerText = msg;
             toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+            setTimeout(() => { toast.style.display = 'none'; }, 3500);
         }
 
-        // --- DASHBOARD LOGIC ---
+        async function pollData() {
+            // Only poll data for the tab currently being viewed
+            if(document.getElementById('tab-facility').classList.contains('active')) loadFacility();
+            if(document.getElementById('tab-dashboard').classList.contains('active')) loadDashboard();
+        }
+
+        // -- 4. Dashboard Stats --
         async function loadDashboard() {
-            // Stats
-            const { count: userCount } = await sb.from('Profiles').select('*', { count: 'exact', head: true });
-            const { count: deviceCount } = await sb.from('Devices').select('*', { count: 'exact', head: true });
-            const { count: scanCount } = await sb.from('ParkingEvents').select('*', { count: 'exact', head: true });
+            const { count: uCount } = await sb.from('Profiles').select('*', { count: 'exact', head: true });
+            const { count: bCount } = await sb.from('Bookings').select('*', { count: 'exact', head: true });
+            const { count: sCount } = await sb.from('ParkingEvents').select('*', { count: 'exact', head: true });
             
-            // Simulated Revenue from Bookings
-            const { data: bookings } = await sb.from('Bookings').select('price_charged');
-            let rev = 0;
-            if(bookings) bookings.forEach(b => rev += parseFloat(b.price_charged || 0));
+            const { data: p } = await sb.from('Payments').select('amount');
+            let rev = 0; if(p) p.forEach(x => rev += (x.amount || 0));
 
-            document.getElementById('stat-users').innerText = userCount || 0;
-            document.getElementById('stat-devices').innerText = deviceCount || 0;
-            document.getElementById('stat-scans').innerText = scanCount || 0;
-            document.getElementById('stat-revenue').innerText = "₹" + rev;
+            document.getElementById('stat-users').innerText = uCount || 0;
+            document.getElementById('stat-bookings').innerText = bCount || 0;
+            document.getElementById('stat-scans').innerText = sCount || 0;
+            document.getElementById('stat-rev').innerText = "₹" + rev;
+        }
 
-            // Load Slots
-            const { data: slots } = await sb.from('Slots').select('*').order('position');
-            const slotContainer = document.getElementById('dashboard-slots');
-            slotContainer.innerHTML = '';
+        // -- 5. Facility Matrix Layout (The Big Update) --
+        async function loadFacility() {
+            // Fetch ALL slots to build the matrix
+            const { data: slots } = await sb.from("Slots").select("*").order("floor").order("position");
             
-            if(slots) {
-                slots.forEach(s => {
-                    let color = s.status === 'free' ? 'var(--success)' : (s.status === 'reserved' ? 'var(--warning)' : 'var(--danger)');
-                    slotContainer.innerHTML += `
-                        <div style="background: var(--bg-card); padding: 15px; border-radius: 8px; border-left: 4px solid ${color};">
-                            <h4 style="font-size:1.1rem;">${s.name}</h4>
-                            <p style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; margin-top:5px;">${s.status}</p>
-                        </div>
-                    `;
+            if (slots) {
+                const matrixContainer = document.getElementById("matrix-container"); 
+                matrixContainer.innerHTML = "";
+                
+                // Group slots by floor level
+                const floors = {};
+                slots.forEach(slot => {
+                    if (!floors[slot.floor]) floors[slot.floor] = [];
+                    floors[slot.floor].push(slot);
+                });
+
+                // Render floors iteratively
+                for (const [floorNum, floorSlots] of Object.entries(floors)) {
+                    const section = document.createElement("div");
+                    section.className = "floor-section";
+                    section.innerHTML = `<div class="floor-title"><i class="fa-solid fa-layer-group"></i> Level ${floorNum} Infrastructure</div>`;
+                    
+                    const grid = document.createElement("div");
+                    grid.className = "slot-grid";
+
+                    floorSlots.forEach(s => {
+                        // Determine visual state based on DB schema logic
+                        let visualState = s.status; // 'free', 'reserved', 'occupied'
+                        let displayTxt = s.status;
+                        
+                        if (s.is_active === false) {
+                            visualState = 'maintenance';
+                            displayTxt = 'Disabled';
+                        }
+
+                        grid.innerHTML += `
+                            <div class="slot ${visualState}" onclick="openOverrideModal('${s.id}', '${s.name}', '${visualState}')">
+                                <h4>${s.name}</h4><p>${displayTxt}</p>
+                            </div>`;
+                    });
+
+                    section.appendChild(grid);
+                    matrixContainer.appendChild(section);
+                }
+            }
+
+            // Populate Exit Dropdown with active cars
+            const { data: b } = await sb.from("Bookings").select("slot_id, plate_number").eq("status", "confirmed");
+            if (b) {
+                const select = document.getElementById("exit-vehicle-select"); const currentVal = select.value;
+                select.innerHTML = '<option value="">-- Select Vehicle --</option>';
+                b.forEach(x => { if(x.plate_number) select.innerHTML += `<option value="${x.plate_number}|${x.slot_id}">${x.plate_number}</option>`; });
+                if(currentVal) select.value = currentVal;
+            }
+        }
+
+        // -- 6. Absolute State Control (Override Modal) --
+        function openOverrideModal(id, name, currentState) {
+            document.getElementById('override-slot-id').value = id;
+            document.getElementById('override-slot-name').innerText = name;
+            document.getElementById('override-status').value = currentState;
+            document.getElementById('override-overlay').style.display = 'flex';
+        }
+
+        async function saveSlotState() {
+            const id = document.getElementById('override-slot-id').value;
+            const targetState = document.getElementById('override-status').value;
+            
+            let updatePayload = {};
+
+            if (targetState === 'maintenance') {
+                // To disable a slot, we set is_active to false. Status can stay 'free'.
+                updatePayload = { is_active: false, status: 'free' };
+            } else {
+                // If making it active again (free, reserved, occupied), set is_active true.
+                updatePayload = { is_active: true, status: targetState };
+            }
+
+            const { error } = await sb.from("Slots").update(updatePayload).eq("id", id);
+            
+            if (error) alert("Override failed: " + error.message);
+            else showToast(`Slot state forced to: ${targetState.toUpperCase()}`);
+            
+            document.getElementById('override-overlay').style.display = 'none';
+            loadFacility();
+        }
+
+        // -- 7. Operator Functions (Walk-in, Exit, God Mode Release) --
+        async function adminWalkIn() {
+            const email = document.getElementById("walkin-email").value.trim();
+            const plate = document.getElementById("walkin-plate").value.trim().replace(/[\s-]/g, '').toUpperCase();
+            if (!email || !plate) { alert("Missing data."); return; }
+
+            await sb.from("customers").insert([{ email: email, vehicle_number: plate }]);
+            
+            // Only find free slots that are ACTIVE
+            const { data: freeSlots } = await sb.from("Slots").select("id, name").eq("status", "free").eq("is_active", true).limit(1);
+            if (!freeSlots || !freeSlots.length) { alert("Facility FULL or all slots in maintenance."); return; }
+
+            const slot = freeSlots[0];
+            await sb.from("Slots").update({ status: 'occupied' }).eq("id", slot.id);
+            
+            const sTime = new Date().toISOString(); const eTime = new Date(Date.now() + 60*60*1000).toISOString();
+            await sb.from("Bookings").insert([{
+                slot_id: slot.id, start_at: sTime, end_at: eTime, price_charged: 0, currency: 'INR',
+                status: 'confirmed', plate_number: plate, time_range: `[${sTime},${eTime})`
+            }]);
+            
+            showToast(`Allocated: ${slot.name}`); 
+            document.getElementById("walkin-email").value = ""; document.getElementById("walkin-plate").value = ""; 
+            loadFacility();
+        }
+
+        function generateQR() {
+            const val = document.getElementById("exit-vehicle-select").value; if (!val) return;
+            const p = val.split("|"); activePlateForExit = p[0]; activeSlotIdForExit = p[1];
+            activeFee = Math.floor(Math.random() * 50) + 30; 
+            document.getElementById("qr-fee").innerText = "₹" + activeFee; document.getElementById("qr-overlay").style.display = "flex";
+            QRCode.toCanvas(`upi://pay?pa=admin@upi&pn=FeeParking&am=${activeFee}&cu=INR&tn=${activePlateForExit}`, { width: 250 }, (e, c) => {
+                document.getElementById("qr-container").innerHTML = ""; document.getElementById("qr-container").appendChild(c);
+            });
+        }
+
+        async function confirmPayment() {
+            await sb.from("Payments").insert([{ plate_number: activePlateForExit, amount: activeFee }]);
+            await sb.from("Slots").update({ status: 'free' }).eq("id", activeSlotIdForExit);
+            await sb.from("Bookings").update({ status: 'completed' }).eq("plate_number", activePlateForExit).eq("status", "confirmed");
+            await sb.from("ParkingEvents").insert([{ plate_number: activePlateForExit, event_type: "EXIT", device_id: "ADMIN_UI", processed: true }]);
+            document.getElementById('qr-overlay').style.display = 'none'; showToast("Payment processed."); loadFacility();
+        }
+
+        async function forceRelease() {
+            const val = document.getElementById("exit-vehicle-select").value; if (!val) { alert("Select vehicle."); return; }
+            if (confirm("GOD MODE: Release slot without logging payment?")) {
+                const p = val.split("|");
+                await sb.from("Slots").update({ status: 'free' }).eq("id", p[1]);
+                await sb.from("Bookings").update({ status: 'cancelled' }).eq("plate_number", p[0]).eq("status", "confirmed");
+                showToast("Slot forcefully released."); loadFacility();
+            }
+        }
+
+        // -- 8. Booking Audit Log --
+        async function loadAudit() {
+            const { data: b } = await sb.from("Bookings").select("*").order("created_at", {ascending: false}).limit(30);
+            const tbody = document.getElementById("audit-tbody"); tbody.innerHTML = "";
+            if (b) {
+                b.forEach(x => {
+                    let color = 'var(--text-muted)';
+                    if(x.status === 'confirmed') color = 'var(--success)';
+                    if(x.status === 'cancelled') color = 'var(--danger)';
+                    if(x.status === 'refunded') color = 'var(--warning)';
+                    
+                    let actionBtn = `<span style="color:var(--text-muted); font-size:0.8rem;">No Action Available</span>`;
+                    if (x.status === 'confirmed') actionBtn = `<button class="btn btn-danger" style="padding: 6px 12px; font-size:0.8rem;" onclick="updateBooking('${x.id}', 'cancelled')">Cancel Booking</button>`;
+                    if (x.status === 'completed') actionBtn = `<button class="btn btn-warning" style="padding: 6px 12px; font-size:0.8rem;" onclick="updateBooking('${x.id}', 'refunded')">Issue Refund</button>`;
+
+                    const start = new Date(x.start_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const end = new Date(x.end_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    tbody.innerHTML += `<tr>
+                        <td style="font-family:monospace; font-size:0.8rem;">${x.id.split('-')[0]}</td>
+                        <td style="font-weight:bold;">${x.plate_number || 'N/A'}</td>
+                        <td style="font-size:0.85rem;">${new Date(x.start_at).toLocaleDateString()} <br><span style="color:var(--text-muted)">${start} - ${end}</span></td>
+                        <td><span class="badge" style="color:${color}; background:rgba(255,255,255,0.1);">${x.status}</span></td>
+                        <td>${actionBtn}</td>
+                    </tr>`;
                 });
             }
         }
 
-        // --- USER MANAGEMENT LOGIC ---
+        async function updateBooking(id, newStatus) {
+            if(confirm(`Mark booking as ${newStatus.toUpperCase()}?`)) {
+                await sb.from("Bookings").update({status: newStatus}).eq("id", id);
+                showToast(`Booking marked as ${newStatus}`); loadAudit();
+            }
+        }
+
+        // -- 9. User Hierarchy --
         async function loadUsers() {
             const { data: users } = await sb.from('Profiles').select('*').order('created_at', { ascending: false });
-            const tbody = document.getElementById('users-tbody');
-            tbody.innerHTML = '';
-
+            const tbody = document.getElementById('users-tbody'); tbody.innerHTML = '';
             if (users) {
                 users.forEach(u => {
-                    const idShort = u.id.split('-')[0] + '...';
-                    const badgeClass = u.role === 'Admin' ? 'admin' : (u.role === 'Operator' ? 'operator' : '');
-                    
-                    // NOTE: We MUST put quotes around '${u.id}' in the onchange string
-                    tbody.innerHTML += `
-                        <tr>
-                            <td style="font-family: monospace; color: var(--text-muted);">${idShort}</td>
-                            <td style="font-weight: 500;">${u.email || 'N/A'}</td>
-                            <td><span class="badge ${badgeClass}">${u.role}</span></td>
-                            <td>
-                                <select class="table-select" onchange="updateUserRole('${u.id}', this.value)">
-                                    <option value="Customer" ${u.role === 'Customer' ? 'selected' : ''}>Customer</option>
-                                    <option value="Operator" ${u.role === 'Operator' ? 'selected' : ''}>Operator</option>
-                                    <option value="Admin" ${u.role === 'Admin' ? 'selected' : ''}>Admin</option>
-                                </select>
-                            </td>
-                        </tr>
-                    `;
+                    tbody.innerHTML += `<tr>
+                        <td style="font-family:monospace; color:var(--text-muted);">${u.id.split('-')[0] + '...'}</td>
+                        <td>${u.email || 'N/A'}</td>
+                        <td><span class="badge" style="background:rgba(255,255,255,0.1);">${u.role}</span></td>
+                        <td><select style="margin:0; padding:6px; font-size:0.8rem;" onchange="updateRole('${u.id}', this.value)">
+                            <option value="Customer" ${u.role === 'Customer' ? 'selected' : ''}>Customer</option>
+                            <option value="Operator" ${u.role === 'Operator' ? 'selected' : ''}>Operator</option>
+                            <option value="Admin" ${u.role === 'Admin' ? 'selected' : ''}>Admin</option>
+                        </select></td></tr>`;
                 });
             }
         }
+        async function updateRole(uid, role) { await sb.from('Profiles').update({ role: role }).eq('id', uid); showToast("Hierarchy updated."); loadUsers(); }
 
-        async function updateUserRole(userId, newRole) {
-            const { error } = await sb.from('Profiles').update({ role: newRole }).eq('id', userId);
-            if (error) {
-                alert("Failed to update role: " + error.message);
-            } else {
-                showToast("Hierarchy privileges updated.");
-                loadUsers(); // Refresh to update badges
-            }
+        // -- 10. System Configurations --
+        async function loadConfig() {
+            const { data: conf } = await sb.from('SystemConfig').select('*');
+            const cont = document.getElementById('config-container'); cont.innerHTML = '';
+            if(conf) conf.forEach(c => {
+                cont.innerHTML += `<div style="margin-bottom:15px;"><label>${c.key}</label><div style="display:flex; gap:10px;"><input type="text" id="cfg_${c.key}" value="${c.value}" style="margin:0;"><button class="btn btn-godmode" onclick="saveConfig('${c.key}')">Save Update</button></div></div>`;
+            });
+        }
+        async function saveConfig(key) {
+            const val = document.getElementById(`cfg_${key}`).value;
+            await sb.from('SystemConfig').update({ value: val }).eq('key', key); showToast(`System Variable '${key}' updated.`);
         }
 
-        // --- DEVICE LOGIC ---
-        async function loadDevices() {
-            const { data: devices } = await sb.from('Devices').select('*').order('created_at', { ascending: false });
-            const tbody = document.getElementById('devices-tbody');
-            tbody.innerHTML = '';
-
-            if (devices) {
-                devices.forEach(d => {
-                    const statusColor = d.status === 'ONLINE' ? 'var(--success)' : 'var(--danger)';
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><strong>${d.device_id}</strong></td>
-                            <td><span class="badge" style="background: rgba(255,255,255,0.1);">${d.device_type}</span></td>
-                            <td style="color: ${statusColor}; font-weight:bold;">
-                                <i class="fa-solid fa-circle" style="font-size:10px;"></i> ${d.status}
-                            </td>
-                            <td style="color: var(--text-muted); font-size:0.85rem;">
-                                ${new Date(d.last_seen).toLocaleString()}
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-        }
-
-        // --- ANPR LOGS LOGIC ---
-        async function loadLogs() {
-            const { data: logs } = await sb.from('ParkingEvents').select('*').order('created_at', { ascending: false }).limit(50);
-            const tbody = document.getElementById('logs-tbody');
-            tbody.innerHTML = '';
-
-            if (logs) {
-                logs.forEach(l => {
-                    const badgeClass = l.event_type === 'ENTRY' ? 'entry' : 'exit';
-                    tbody.innerHTML += `
-                        <tr>
-                            <td style="font-family: monospace; font-size:1.1rem; font-weight:700;">${l.plate_number}</td>
-                            <td><span class="badge ${badgeClass}">${l.event_type}</span></td>
-                            <td style="color: var(--accent);">${(l.confidence * 100).toFixed(1)}%</td>
-                            <td style="font-size:0.85rem; color:var(--text-muted);">${new Date(l.created_at).toLocaleString()}</td>
-                            <td style="font-size:0.85rem;">${l.device_id || 'System'}</td>
-                        </tr>
-                    `;
-                });
-            }
-        }
-
-        // --- LOGOUT ---
-        async function logout() {
-            await sb.auth.signOut();
-            window.location.href = "/";
-        }
-
-        // Boot
+        // -- Session Management --
+        async function logout() { await sb.auth.signOut(); window.location.href = "/"; }
+        
+        // Boot up
         window.onload = init;
     </script>
 </body>
